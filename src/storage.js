@@ -11,24 +11,24 @@ export function defaultGroups() {
 }
 
 export function loadGroups() {
-  try { const r = localStorage.getItem(KEY_GROUPS); if (r) return JSON.parse(r); } catch {}
+  try { const r = localStorage.getItem(KEY_GROUPS); if (r) return JSON.parse(r); } catch { /* ignore */ }
   return defaultGroups();
 }
 
 export function saveGroups(groups) {
-  try { localStorage.setItem(KEY_GROUPS, JSON.stringify(groups)); } catch {}
+  try { localStorage.setItem(KEY_GROUPS, JSON.stringify(groups)); } catch { /* ignore */ }
 }
 
 export function loadActiveGame(gameId) {
   try {
     const r = localStorage.getItem(GAMES[gameId].key);
     if (r) { const d = JSON.parse(r); return d.activeGame || null; }
-  } catch {}
+  } catch { /* ignore */ }
   return null;
 }
 
 export function saveActiveGame(gameId, activeGame) {
-  try { localStorage.setItem(GAMES[gameId].key, JSON.stringify({ activeGame })); } catch {}
+  try { localStorage.setItem(GAMES[gameId].key, JSON.stringify({ activeGame })); } catch { /* ignore */ }
 }
 
 export function loadData(gameId) {
