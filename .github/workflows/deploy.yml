@@ -2,7 +2,7 @@ name: Deploy Score Keeper
 
 on:
   push:
-    branches: [main, claude/deploy-score-keeper-CCPHR]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
