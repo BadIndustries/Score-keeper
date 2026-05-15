@@ -7,6 +7,8 @@
     "generate": "node scripts/gen-3d-dice.cjs && node scripts/gen-icon-variants.cjs && node -e \"const fs=require('fs');fs.copyFileSync('public/icon-preview-3d-192.png','public/pwa-192.png');fs.copyFileSync('public/icon-preview-3d-512.png','public/pwa-512.png');console.log('PWA icons -> 3D dice ✓');\"",
     "dev": "npm run generate && vite",
     "build": "npm run generate && vite build",
+    "test": "vitest run --reporter=verbose --reporter=github-actions",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -24,6 +26,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "vite": "^8.0.12",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^3.2.0"
   }
 }
