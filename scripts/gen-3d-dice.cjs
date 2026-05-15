@@ -177,7 +177,25 @@ function draw3dDice(x, y, S) {
   return [...faceCol, 255];
 }
 
+// Maskable variant: full-bleed background, dice scaled to 78% (safe zone)
+function draw3dDiceMaskable(x, y, S) {
+  const BG_C = [10, 10, 15];
+  const scale = 0.78;
+  const offset = S * (1 - scale) / 2;
+
+  if (x < offset || x > S - offset || y < offset || y > S - offset) {
+    return [...BG_C, 255];
+  }
+
+  const vx = (x - offset) / scale;
+  const vy = (y - offset) / scale;
+  const result = draw3dDice(vx, vy, S);
+  if (result[3] === 0) return [...BG_C, 255];
+  return result;
+}
+
 const outDir = path.join(__dirname, '..', 'public');
 fs.writeFileSync(path.join(outDir, 'icon-preview-3d-192.png'), makePNG(192, draw3dDice));
 fs.writeFileSync(path.join(outDir, 'icon-preview-3d-512.png'), makePNG(512, draw3dDice));
+fs.writeFileSync(path.join(outDir, 'icon-preview-3d-maskable-512.png'), makePNG(512, draw3dDiceMaskable));
 console.log('3D dice icons generated ✓');
