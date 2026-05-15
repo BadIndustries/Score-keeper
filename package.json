@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "generate": "node scripts/gen-icons.cjs && node scripts/gen-3d-dice.cjs && node scripts/gen-icon-variants.cjs",
+    "generate": "node scripts/gen-3d-dice.cjs && node scripts/gen-icon-variants.cjs && node -e \"const fs=require('fs');fs.copyFileSync('public/icon-preview-3d-192.png','public/pwa-192.png');fs.copyFileSync('public/icon-preview-3d-512.png','public/pwa-512.png');console.log('PWA icons -> 3D dice ✓');\"",
     "dev": "npm run generate && vite",
     "build": "npm run generate && vite build",
     "lint": "eslint .",
