@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from './games.config.js';
+import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS, KEY_GROUPS } from './games.config.js';
 import { loadData, saveGroups, saveActiveGame, loadGroups } from './storage.js';
 
 // ── SHARED UI ────────────────────────────────────────────────────────
-function Btn({ primary, ghost, full, sm, G, style, ...props }) {
+function Btn({ primary, ghost: _ghost, full, sm, G, style, ...props }) {
   const base = { border:"none", borderRadius:10, cursor:"pointer", fontFamily:"inherit", fontWeight:600,
     fontSize: sm?".75rem":".85rem", padding: sm?"6px 14px":"11px 18px", width: full?"100%":"auto",
     transition:"opacity .15s, transform .1s" };
@@ -801,7 +801,7 @@ const WHO_CSS = `
 `;
 
 function loadWheelPlayers() {
-  try { const r = localStorage.getItem(KEY_WHEEL); if (r) return JSON.parse(r); } catch(e) {}
+  try { const r = localStorage.getItem(KEY_WHEEL); if (r) return JSON.parse(r); } catch { /* ignore */ }
   return [];
 }
 
@@ -829,7 +829,7 @@ function WhoStartsApp({ onBack }) {
   const groups = loadGroups();
 
   const saveAndSet = (p) => {
-    try { localStorage.setItem(KEY_WHEEL, JSON.stringify(p)); } catch(e) {}
+    try { localStorage.setItem(KEY_WHEEL, JSON.stringify(p)); } catch { /* ignore */ }
     setWP(p);
   };
 
@@ -1191,7 +1191,7 @@ function GameSelector({ onSelect }) {
         setUpdateMsg('✓ Vous avez déjà la dernière version !');
         setUpdating(false);
       }
-    } catch(e) {
+    } catch {
       setUpdateMsg('⚠️ Impossible de vérifier — vérifie ta connexion.');
       setUpdating(false);
     }
