@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS, KEY_GROUPS } from './games.config.js';
 import { loadData, saveGroups, saveActiveGame, loadGroups } from './storage.js';
 import { makeActiveGame, computeTourScores, isGameOver, getWinnerIndex } from './gameLogic.js';
@@ -21,11 +21,11 @@ function LimitCtrl({ value, onChange, G, min, max, step, label }) {
       background:G.surface2, border:`1px solid ${G.border}`, borderRadius:10, padding:"10px 14px", marginBottom:14 }}>
       <span style={{ fontSize:".8rem", color:G.sub }}>{label}</span>
       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <div onClick={()=>onChange(Math.max(min,value-step))}
+        <div role="button" tabIndex={0} aria-label="Diminuer" onClick={()=>onChange(Math.max(min,value-step))} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onChange(Math.max(min,value-step));}}}
           style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:6, width:28, height:28,
             display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", userSelect:"none" }}>−</div>
         <span style={{ fontFamily:"'Cinzel',serif", fontSize:"1.1rem", color:G.accent, minWidth:"3.5ch", textAlign:"center" }}>{value}</span>
-        <div onClick={()=>onChange(Math.min(max,value+step))}
+        <div role="button" tabIndex={0} aria-label="Augmenter" onClick={()=>onChange(Math.min(max,value+step))} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onChange(Math.min(max,value+step));}}}
           style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:6, width:28, height:28,
             display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", userSelect:"none" }}>＋</div>
       </div>
@@ -49,6 +49,7 @@ function PlayerEditRow({ name, index, onChange, onRemove, canRemove }) {
 // ── GAME ENGINE ──────────────────────────────────────────────────────
 function GameApp({ gameId, onBack }) {
   const G = GAMES[gameId];
+  const MIN_PLAYERS = 2;
   const [data, setData] = useState(()=>loadData(gameId));
   const [screen, setScreen] = useState("home");
   const [sheet, setSheet] = useState(null);
@@ -62,19 +63,21 @@ function GameApp({ gameId, onBack }) {
   const [statsGrpId, setStatsGrpId]   = useState(null);
 
   const persist = useCallback((next) => {
-    saveGroups(next.groups);
-    saveActiveGame(gameId, next.activeGame);
+    try {
+      saveGroups(next.groups);
+      saveActiveGame(gameId, next.activeGame);
+    } catch(e) { console.error('persist failed', e); }
     setToast(true); setTimeout(()=>setToast(false), 1600);
   }, [gameId]);
 
   const update = useCallback((fn) => {
-    setData(prev => { const next=fn(JSON.parse(JSON.stringify(prev))); persist(next); return next; });
+    setData(prev => { const next=fn(structuredClone(prev)); persist(next); return next; });
   }, [persist]);
 
   const g = data.activeGame;
   const gameGroupName = g?.groupId ? (data.groups.find(x=>x.id===g.groupId)?.name||G.label) : "Partie rapide";
 
-  const S = {
+  const S = useMemo(() => ({
     root: { fontFamily:"'DM Sans',sans-serif", background:G.bg, color:G.text, width:"100%", minHeight:"100vh",
       display:"flex", flexDirection:"column", position:"relative",
       backgroundImage:`radial-gradient(ellipse at 50% 0%,${G.colorDim} 0%,transparent 55%)` },
@@ -90,7 +93,7 @@ function GameApp({ gameId, onBack }) {
     footer: { flexShrink:0, padding:`8px 12px calc(env(safe-area-inset-bottom, 0px) + 8px)`, borderTop:`1px solid ${G.border}`, display:"flex", gap:8 },
     iconBtn: { background:G.surface2, border:`1px solid ${G.border}`, borderRadius:8, width:34, height:34,
       display:"flex", alignItems:"center", justifyContent:"center", fontSize:".9rem", cursor:"pointer", flexShrink:0 },
-  };
+  }), [G]);
 
   function getGroupLimit(grp) {
     return grp.limits?.[gameId] ?? G.defaultLimit;
@@ -122,7 +125,7 @@ function GameApp({ gameId, onBack }) {
   function saveGroup() {
     const {id,name,players,limits}=editState;
     const n=name.trim(); if(!n){alert("Donne un nom au groupe !");return;}
-    const pl=players.map(p=>p.trim()).filter(p=>p.length>0); if(pl.length<2){alert("Il faut au moins 2 joueurs !");return;}
+    const pl=players.map(p=>p.trim()).filter(p=>p.length>0); if(pl.length<MIN_PLAYERS){alert(`Il faut au moins ${MIN_PLAYERS} joueurs !`);return;}
     update(a=>{
       if(id){
         const grp=a.groups.find(x=>x.id===id);
@@ -143,7 +146,7 @@ function GameApp({ gameId, onBack }) {
   function openQuickSetup(){setQuickState({players:["",""],limit:G.defaultLimit});setScreen("quickSetup");}
   function startQuickGame(){
     const players=quickState.players.map(p=>p.trim()).filter(p=>p.length>0);
-    if(players.length<2){alert("Il faut au moins 2 joueurs !");return;}
+    if(players.length<MIN_PLAYERS){alert(`Il faut au moins ${MIN_PLAYERS} joueurs !`);return;}
     update(a=>{
       a.activeGame = makeActiveGame(gameId, null, players, quickState.limit);
       return a;
@@ -324,9 +327,9 @@ function GameApp({ gameId, onBack }) {
                   {grp.pastGames?.length?` · ${grp.pastGames.length} partie${grp.pastGames.length>1?"s":""} jouée${grp.pastGames.length>1?"s":""}`:""}</div>
               </div>
               <div style={{display:"flex",gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
-                {grp.pastGames?.length>0 && <div style={S.iconBtn} onClick={()=>{setPastGroupId(grp.id);setSheet("past");}}>🏆</div>}
-                <div style={S.iconBtn} onClick={()=>{setStatsGrpId(grp.id);setSheet("stats");}}>📊</div>
-                <div style={S.iconBtn} onClick={()=>openEditGroup(grp.id)}>✏️</div>
+                {grp.pastGames?.length>0 && <div role="button" tabIndex={0} aria-label="Voir l'historique" style={S.iconBtn} onClick={()=>{setPastGroupId(grp.id);setSheet("past");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPastGroupId(grp.id);setSheet("past");}}}>🏆</div>}
+                <div role="button" tabIndex={0} aria-label="Statistiques" style={S.iconBtn} onClick={()=>{setStatsGrpId(grp.id);setSheet("stats");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setStatsGrpId(grp.id);setSheet("stats");}}}>📊</div>
+                <div role="button" tabIndex={0} aria-label="Modifier le groupe" style={S.iconBtn} onClick={()=>openEditGroup(grp.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openEditGroup(grp.id);}}}>✏️</div>
               </div>
             </div>
           ))}
@@ -847,6 +850,7 @@ const WHO_CSS = `
   .wdot.winner .dpulse{animation:wpulse-w 1s ease-out infinite!important}
   .wdot.winner .dpulse2{animation:wpulse-w 1s ease-out .4s infinite!important}
   .wdot.winner::after{content:'👑';position:absolute;top:-52px;left:50%;transform:translateX(-50%);font-size:36px;animation:wcrown .5s cubic-bezier(.34,1.56,.64,1) .2s both;filter:drop-shadow(0 0 12px gold)}
+  @media (prefers-reduced-motion:reduce){.wdot,.wdot .dring,.wdot .dpulse,.wdot .dpulse2{animation:none!important;transition:none!important}.wdot.winner,.wdot.loser{animation:none!important}.wdot.winner .dring,.wdot.winner .dpulse,.wdot.winner .dpulse2,.wdot.winner::after{animation:none!important}}
 `;
 
 function loadWheelPlayers() {
@@ -857,7 +861,7 @@ function loadWheelPlayers() {
 function WhoStartsApp({ onBack }) {
   const [mode, setMode]     = useState("hub");   // hub | fingers | wheel
   const [wSub, setWSub]     = useState("setup"); // setup | spin | result
-  const [wPlayers, setWP]   = useState(loadWheelPlayers);
+  const [wPlayers, setWP]   = useState(() => loadWheelPlayers());
   const [wInput, setWInput] = useState("");
   const [wResult, setWResult] = useState(null);
   const [wSpinning, setWSpinning] = useState(false);
@@ -948,7 +952,7 @@ function WhoStartsApp({ onBack }) {
     const makeDot=(x,y,idx)=>{
       const d=document.createElement("div"); d.className="wdot";
       d.style.cssText=`left:${x}px;top:${y}px;--c:${DOT_COLORS[idx]}`;
-      d.innerHTML=`<div class="dpulse"></div><div class="dpulse2"></div><div class="dring"></div><div class="dcore"></div>`;
+      ['dpulse','dpulse2','dring','dcore'].forEach(c=>{const e=document.createElement('div');e.className=c;d.appendChild(e);});
       document.body.appendChild(d); return d;
     };
     const cancelCD=()=>{
@@ -1090,6 +1094,7 @@ function WhoStartsApp({ onBack }) {
       )}
       {(fPhase==="waiting"||fPhase==="countdown") && (
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",pointerEvents:"none"}}>
+          <div aria-live="polite" aria-atomic="true" style={{position:"absolute",width:1,height:1,overflow:"hidden",clip:"rect(0,0,0,0)"}}>{fCount} doigt{fCount>1?"s":""} posé{fCount>1?"s":""}</div>
           <div style={{fontSize:13,letterSpacing:3,textTransform:"uppercase",color:"#555566"}}>Doigts posés</div>
           <div key={fCount} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(80px,28vw,130px)",lineHeight:1,animation:"wpop .2s cubic-bezier(.34,1.56,.64,1)"}}>{fCount}</div>
           <div style={{fontSize:14,color:"#555566"}}>
@@ -1268,6 +1273,7 @@ function GameSelector({ onSelect }) {
   }
 
   function importGroups(file) {
+    if (file.size > 512 * 1024) { setImportMsg('⚠️ Fichier trop volumineux (max 512 Ko).'); return; }
     const reader = new FileReader();
     reader.onload = e => {
       try {
@@ -1277,8 +1283,15 @@ function GameSelector({ onSelect }) {
           if (typeof g.id !== 'string') throw new Error('id');
           if (typeof g.name !== 'string' || g.name.length > 50) throw new Error('name');
           if (!Array.isArray(g.players) || g.players.length > 20) throw new Error('players');
+          if (g.players.length < MIN_PLAYERS) throw new Error('players min');
           for (const p of g.players) {
-            if (typeof p !== 'string' || p.length > 24) throw new Error('player name');
+            if (typeof p !== 'string' || p.trim().length === 0 || p.length > 24) throw new Error('player name');
+          }
+          if (g.pastGames !== undefined) {
+            if (!Array.isArray(g.pastGames)) throw new Error('pastGames');
+            for (const pg of g.pastGames) {
+              if (typeof pg !== 'object' || pg === null || typeof pg.winner !== 'string') throw new Error('pastGame');
+            }
           }
         }
         saveGroups(groups);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame } from './gameLogic.js'
 
 describe('computeTourScores', () => {
   describe('Odin / Roi des Nains / Skyjo (sans double)', () => {
@@ -33,6 +33,15 @@ describe('computeTourScores', () => {
     it('x2 avec score 0 et flip7 = 30', () => {
       expect(computeTourScores('flip7', [0], [true], [], [true])).toEqual([30])
     })
+    it('flip7=false dbl=true : base * 2', () => {
+      expect(computeTourScores('flip7', [4], [false], [], [true])).toEqual([8])
+    })
+    it('flip7=true dbl=false : base + 15', () => {
+      expect(computeTourScores('flip7', [4], [true], [], [false])).toEqual([19])
+    })
+    it('flip7=false dbl=false : score inchange', () => {
+      expect(computeTourScores('flip7', [4], [false], [], [false])).toEqual([4])
+    })
   })
 
   describe('Skyjo -- double si actif et score > 0', () => {
@@ -62,6 +71,12 @@ describe('isGameOver', () => {
     expect(isGameOver([15], 15)).toBe(true)
     expect(isGameOver([14], 15)).toBe(false)
   })
+  it('retourne false avec un tableau vide', () => {
+    expect(isGameOver([], 15)).toBe(false)
+  })
+  it('gere Infinity', () => {
+    expect(isGameOver([Infinity, 10], 15)).toBe(true)
+  })
 })
 
 describe('getWinnerIndex', () => {
@@ -73,5 +88,43 @@ describe('getWinnerIndex', () => {
   })
   it('lowest: en cas d egalite, retourne le premier', () => {
     expect(getWinnerIndex([5, 5, 10], 'lowest')).toBe(0)
+  })
+  it('retourne -1 avec un tableau vide', () => {
+    expect(getWinnerIndex([], 'lowest')).toBe(-1)
+  })
+  it('highest: en cas d egalite, retourne le premier', () => {
+    expect(getWinnerIndex([10, 10, 5], 'highest')).toBe(0)
+  })
+})
+
+describe('makeActiveGame', () => {
+  it('initialise odin avec les bonnes valeurs par defaut', () => {
+    const game = makeActiveGame('odin', 'g1', ['Alice', 'Bob'], 15)
+    expect(game.tour).toBe(1)
+    expect(game.manche).toBe(1)
+    expect(game.totals).toEqual([0, 0])
+    expect(game.current).toEqual([0, 0])
+    expect(game.players).toEqual(['Alice', 'Bob'])
+    expect(game.limit).toBe(15)
+    expect(game.groupId).toBe('g1')
+    expect(game.history).toEqual([])
+    expect(typeof game.startedAt).toBe('string')
+  })
+  it('initialise flip7 avec les champs flip7 et flip7dbl', () => {
+    const game = makeActiveGame('flip7', null, ['Alice', 'Bob', 'Carol'], 200)
+    expect(game.flip7).toEqual([false, false, false])
+    expect(game.flip7dbl).toEqual([false, false, false])
+    expect(game.doubled).toBeUndefined()
+  })
+  it('initialise skyjo avec le champ doubled', () => {
+    const game = makeActiveGame('skyjo', 'g1', ['Alice', 'Bob'], 100)
+    expect(game.doubled).toEqual([false, false])
+    expect(game.flip7).toBeUndefined()
+  })
+  it('ne partage pas le tableau players (copie profonde)', () => {
+    const players = ['Alice', 'Bob']
+    const game = makeActiveGame('odin', null, players, 15)
+    players.push('Carol')
+    expect(game.players).toHaveLength(2)
   })
 })

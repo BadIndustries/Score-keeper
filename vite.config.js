@@ -33,10 +33,20 @@ export default defineConfig({
         orientation: 'portrait',
         scope: '/Score-keeper/',
         start_url: '/Score-keeper/',
+        categories: ['games'],
         icons: [
-          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+        shortcuts: [
+          {
+            name: 'Partie rapide',
+            short_name: 'Rapide',
+            description: 'Démarrer une partie rapide',
+            url: '/Score-keeper/',
+            icons: [{ src: 'pwa-192.png', sizes: '192x192' }],
+          },
         ],
       },
       workbox: {
@@ -45,10 +55,10 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'google-fonts-stylesheets',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
           {
@@ -56,7 +66,7 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts-webfonts',
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
         ],
@@ -68,9 +78,15 @@ export default defineConfig({
     include: ['src/**/*.test.{js,jsx}'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov'],
+      reporter: ['text', 'lcov', 'html'],
       include: ['src/**/*.{js,jsx}'],
       exclude: ['src/**/*.test.{js,jsx}', 'src/main.jsx'],
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 60,
+        statements: 70,
+      },
     },
   },
 })
