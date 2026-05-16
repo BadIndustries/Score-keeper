@@ -1164,7 +1164,7 @@ function GameSelector({ onSelect }) {
   const [importMsg,    setImportMsg]    = useState(null);
   const [updateMsg,    setUpdateMsg]    = useState(null);
   const [updating,     setUpdating]     = useState(false);
-  const [groups,       setGroups]       = useState(() => loadGroups());
+  const [groups]                        = useState(() => loadGroups());
 
   const allHistory = () => {
     const entries = [];
