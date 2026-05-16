@@ -6,16 +6,16 @@ describe('computeTourScores', () => {
     it('retourne les scores tels quels', () => {
       expect(computeTourScores('odin', [3, 5, 2])).toEqual([3, 5, 2])
     })
-    it('retourne les scores négatifs tels quels', () => {
+    it('retourne les scores negatifs tels quels', () => {
       expect(computeTourScores('skyjo', [-3, 5], [], [false, false])).toEqual([-3, 5])
     })
   })
 
-  describe('Flip7 — +15 pts si flip actif', () => {
+  describe('Flip7 -- +15 pts si flip actif', () => {
     it('ajoute 15 pts aux joueurs avec flip7 actif', () => {
       expect(computeTourScores('flip7', [4, 2, 0], [true, false, true])).toEqual([19, 2, 15])
     })
-    it('sans flip7, les scores sont inchangés', () => {
+    it('sans flip7, les scores sont inchanges', () => {
       expect(computeTourScores('flip7', [4, 2], [false, false])).toEqual([4, 2])
     })
     it('score 0 + flip7 = 15', () => {
@@ -23,14 +23,26 @@ describe('computeTourScores', () => {
     })
   })
 
-  describe('Skyjo — double si actif et score > 0', () => {
+  describe('Flip7 -- x2 si flip7dbl actif', () => {
+    it('double le score total incluant le bonus flip7', () => {
+      expect(computeTourScores('flip7', [4, 2], [true, false], [], [true, false])).toEqual([38, 2])
+    })
+    it('double le score de base sans bonus flip7', () => {
+      expect(computeTourScores('flip7', [5, 0], [false, false], [], [true, false])).toEqual([10, 0])
+    })
+    it('x2 avec score 0 et flip7 = 30', () => {
+      expect(computeTourScores('flip7', [0], [true], [], [true])).toEqual([30])
+    })
+  })
+
+  describe('Skyjo -- double si actif et score > 0', () => {
     it('double les scores positifs', () => {
       expect(computeTourScores('skyjo', [5, 3], [], [true, true])).toEqual([10, 6])
     })
-    it('ne double pas les scores négatifs', () => {
+    it('ne double pas les scores negatifs', () => {
       expect(computeTourScores('skyjo', [-5, 3], [], [true, true])).toEqual([-5, 6])
     })
-    it('ne double pas zéro', () => {
+    it('ne double pas zero', () => {
       expect(computeTourScores('skyjo', [0, 3], [], [true, true])).toEqual([0, 6])
     })
   })
@@ -40,10 +52,10 @@ describe('isGameOver', () => {
   it('true quand un joueur atteint la limite exacte', () => {
     expect(isGameOver([10, 15, 8], 15)).toBe(true)
   })
-  it('true quand un joueur dépasse la limite', () => {
+  it('true quand un joueur depasse la limite', () => {
     expect(isGameOver([10, 18, 8], 15)).toBe(true)
   })
-  it('false si personne n\'a atteint la limite', () => {
+  it('false si personne na atteint la limite', () => {
     expect(isGameOver([10, 14, 8], 15)).toBe(false)
   })
   it('fonctionne avec un seul joueur', () => {
@@ -59,7 +71,7 @@ describe('getWinnerIndex', () => {
   it('highest: gagnant = plus de points (Flip7)', () => {
     expect(getWinnerIndex([12, 5, 18], 'highest')).toBe(2)
   })
-  it('lowest: en cas d\'égalité, retourne le premier', () => {
+  it('lowest: en cas d egalite, retourne le premier', () => {
     expect(getWinnerIndex([5, 5, 10], 'lowest')).toBe(0)
   })
 })
