@@ -87,7 +87,7 @@ function GameApp({ gameId, onBack }) {
       fontSize:".75rem", color:G.sub, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" },
     scroll: { flex:1, overflowY:"auto", padding:"10px 12px" },
     sLabel: { fontSize:".6rem", letterSpacing:".18em", textTransform:"uppercase", color:G.sub, marginBottom:8, marginTop:4 },
-    footer: { flexShrink:0, padding:"8px 12px", borderTop:`1px solid ${G.border}`, display:"flex", gap:8 },
+    footer: { flexShrink:0, padding:`8px 12px calc(env(safe-area-inset-bottom, 0px) + 8px)`, borderTop:`1px solid ${G.border}`, display:"flex", gap:8 },
     iconBtn: { background:G.surface2, border:`1px solid ${G.border}`, borderRadius:8, width:34, height:34,
       display:"flex", alignItems:"center", justifyContent:"center", fontSize:".9rem", cursor:"pointer", flexShrink:0 },
   };
