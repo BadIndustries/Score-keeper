@@ -320,7 +320,7 @@ function GameApp({ gameId, onBack }) {
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{grp.name}</div>
                 <div style={{fontSize:".68rem",color:G.sub,marginTop:2}}>
-                  {grp.players.length} joueurs · {G.limitLabel.toLowerCase()} {getGroupLimit(grp)} pts
+                  {grp.players.length} joueurs{!G.endOnDemand && ` · ${G.limitLabel.toLowerCase()} ${getGroupLimit(grp)} pts`}
                   {grp.pastGames?.length?` · ${grp.pastGames.length} partie${grp.pastGames.length>1?"s":""} jouée${grp.pastGames.length>1?"s":""}`:""}</div>
               </div>
               <div style={{display:"flex",gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
@@ -360,8 +360,8 @@ function GameApp({ gameId, onBack }) {
           {Object.entries(GAMES).map(([gid, Gx])=>(
             <div key={gid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
               background:G.surface2,border:`1px solid ${G.border}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
-              <span style={{fontSize:".85rem",color:G.text}}>{Gx.emoji} {Gx.label} <span style={{fontSize:".7rem",color:G.sub}}>— {Gx.limitLabel}</span></span>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:".85rem",color:G.text}}>{Gx.emoji} {Gx.label}{!Gx.endOnDemand && <span style={{fontSize:".7rem",color:G.sub}}> — {Gx.limitLabel}</span>}</span>
+              {!Gx.endOnDemand && <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}}))}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
@@ -371,7 +371,7 @@ function GameApp({ gameId, onBack }) {
                 <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.min(Gx.limitMax,(s.limits[gid]??Gx.defaultLimit)+Gx.limitStep)}}))}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>＋</div>
-              </div>
+              </div>}
             </div>
           ))}
 
@@ -397,10 +397,12 @@ function GameApp({ gameId, onBack }) {
           <div style={S.topTitle}>Partie rapide</div>
         </div>
         <div style={S.scroll}>
-          <div style={S.sLabel}>{G.limitLabel}</div>
-          <LimitCtrl G={G} value={quickState.limit} label={G.limitLabel}
-            onChange={v=>setQuickState(s=>({...s,limit:v}))}
-            min={G.limitMin} max={G.limitMax} step={G.limitStep}/>
+          {!G.endOnDemand && <>
+            <div style={S.sLabel}>{G.limitLabel}</div>
+            <LimitCtrl G={G} value={quickState.limit} label={G.limitLabel}
+              onChange={v=>setQuickState(s=>({...s,limit:v}))}
+              min={G.limitMin} max={G.limitMax} step={G.limitStep}/>
+          </>}
           <div style={S.sLabel}>Joueurs <span style={{color:G.sub}}>(2 à 6)</span></div>
           {quickState.players.map((name,i)=>(
             <PlayerEditRow key={i} name={name} index={i}
