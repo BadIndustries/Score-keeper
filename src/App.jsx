@@ -977,7 +977,9 @@ function WhoStartsApp({ onBack }) {
   }, [mode]);
 
   const backBtn = (dark) => (
-    <div data-back="true" onClick={()=>{ if(mode==="hub") onBack(); else setMode("hub"); }}
+    <div data-back="true"
+      onTouchEnd={e=>{e.stopPropagation();e.preventDefault();if(mode==="hub")onBack();else setMode("hub");}}
+      onClick={()=>{ if(mode==="hub") onBack(); else setMode("hub"); }}
       style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 14px)",left:16,
       background:dark?"rgba(26,26,46,.1)":"rgba(255,255,255,.13)",
       backdropFilter:"blur(8px)",borderRadius:100,padding:"9px 16px",fontSize:13,fontWeight:700,
