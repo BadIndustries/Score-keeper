@@ -2,16 +2,17 @@ export const KEY_ODIN   = "odin-v6";
 export const KEY_FLIP7  = "flip7-v2";
 export const KEY_SKYJO  = "skyjo-v1";
 export const KEY_RDN    = "rdn-v1";
+export const KEY_QWIRKLE = "qwirkle-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
-export const MEDALS  = ["🥇","🥈","🥉","4e","5e","6e"];
+export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
 export const genId   = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 
 export const GAMES = {
   odin: {
     key: KEY_ODIN,
     label: "Odin",
-    emoji: "⚔️",
+    emoji: "\u2694\uFE0F",
     color: "#c9933a",
     colorDim: "rgba(201,147,58,.12)",
     border: "#3a342c",
@@ -25,7 +26,7 @@ export const GAMES = {
     btnColor: "#12100e",
     desc: "Le plus de points gagne\nObjectif : atteindre la limite",
     defaultLimit: 15,
-    limitLabel: "Éliminé à partir de",
+    limitLabel: "\u00C9limin\u00E9 \u00E0 partir de",
     limitMin: 5, limitMax: 50, limitStep: 1,
     goalKey: "limit",
     winMode: "lowest",
@@ -33,7 +34,7 @@ export const GAMES = {
   flip7: {
     key: KEY_FLIP7,
     label: "Flip 7",
-    emoji: "🃏",
+    emoji: "\u{1F3B4}",
     color: "#1f6feb",
     colorDim: "rgba(99,179,237,.12)",
     border: "#21262d",
@@ -45,7 +46,7 @@ export const GAMES = {
     accent: "#63b3ed",
     btnBg: "#1f6feb",
     btnColor: "#fff",
-    desc: "Le plus de points gagne\nPremier à atteindre l'objectif",
+    desc: "Le plus de points gagne\nPremier \u00E0 atteindre l'objectif",
     defaultLimit: 200,
     limitLabel: "Objectif de points",
     limitMin: 50, limitMax: 500, limitStep: 50,
@@ -55,7 +56,7 @@ export const GAMES = {
   skyjo: {
     key: KEY_SKYJO,
     label: "Skyjo",
-    emoji: "🎴",
+    emoji: "\u{1F004}",
     color: "#7c3aed",
     colorDim: "rgba(124,58,237,.12)",
     border: "#2d1f4a",
@@ -69,7 +70,7 @@ export const GAMES = {
     btnColor: "#fff",
     desc: "Le moins de points gagne\nFin quand un joueur atteint 100 pts",
     defaultLimit: 100,
-    limitLabel: "Fin de partie à",
+    limitLabel: "Fin de partie \u00E0",
     limitMin: 50, limitMax: 200, limitStep: 10,
     goalKey: "limit",
     winMode: "lowest",
@@ -78,7 +79,7 @@ export const GAMES = {
   rdn: {
     key: KEY_RDN,
     label: "Roi des Nains",
-    emoji: "👑",
+    emoji: "\u{1F451}",
     color: "#16a34a",
     colorDim: "rgba(22,163,74,.12)",
     border: "#1a3020",
@@ -90,13 +91,35 @@ export const GAMES = {
     accent: "#4ade80",
     btnBg: "#16a34a",
     btnColor: "#091410",
-    desc: "Le moins de points gagne\nÉliminé quand la limite est atteinte",
+    desc: "Le moins de points gagne\n\u00C9limin\u00E9 quand la limite est atteinte",
     defaultLimit: 40,
-    limitLabel: "Éliminé à partir de",
+    limitLabel: "\u00C9limin\u00E9 \u00E0 partir de",
     limitMin: 10, limitMax: 100, limitStep: 5,
     goalKey: "limit",
     winMode: "lowest",
   },
+  qwirkle: {
+    key: KEY_QWIRKLE,
+    label: "Qwirkle",
+    emoji: "\u{1F3AF}",
+    color: "#e85d04",
+    colorDim: "rgba(232,93,4,.12)",
+    border: "#3d1f0a",
+    surface: "#231208",
+    surface2: "#2e180c",
+    bg: "#160b04",
+    text: "#fdf0e8",
+    sub: "#9a6a4a",
+    accent: "#fb923c",
+    btnBg: "#e85d04",
+    btnColor: "#fff",
+    desc: "Le plus de points gagne\nFormez des lignes de tuiles",
+    defaultLimit: 100,
+    limitLabel: "Objectif de points",
+    limitMin: 50, limitMax: 300, limitStep: 10,
+    goalKey: "goal",
+    winMode: "highest",
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100 };
