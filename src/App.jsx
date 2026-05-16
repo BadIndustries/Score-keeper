@@ -141,14 +141,15 @@ function loadData(gameId) {
 }
 
 // ── SHARED UI ────────────────────────────────────────────────────────
-function Btn({ primary, ghost: _ghost, full, sm, G, style, ...props }) {
+function Btn({ primary, full, sm, G, style, ...props }) {
+  const { ghost, ...safeProps } = props;
   const base = { border:"none", borderRadius:10, cursor:"pointer", fontFamily:"inherit", fontWeight:600,
     fontSize: sm?".75rem":".85rem", padding: sm?"6px 14px":"11px 18px", width: full?"100%":"auto",
     transition:"opacity .15s, transform .1s" };
   const v = primary
     ? { background: G?.btnBg||"#c9933a", color: G?.btnColor||"#12100e" }
     : { background: G?.surface2||"#272320", border:`1px solid ${G?.border||"#3a342c"}`, color: G?.sub||"#8a7d6a" };
-  return <button style={{...base,...v,...style}} {...props}/>;
+  return <button style={{...base,...v,...style}} {...safeProps}/>;
 }
 
 function LimitCtrl({ value, onChange, G, min, max, step, label }) {
