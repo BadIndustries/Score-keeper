@@ -47,9 +47,10 @@ function PlayerEditRow({ name, index, onChange, onRemove, canRemove }) {
 }
 
 // ── GAME ENGINE ──────────────────────────────────────────────────────
+const MIN_PLAYERS = 2;
+
 function GameApp({ gameId, onBack }) {
   const G = GAMES[gameId];
-  const MIN_PLAYERS = 2;
   const [data, setData] = useState(()=>loadData(gameId));
   const [screen, setScreen] = useState("home");
   const [sheet, setSheet] = useState(null);
