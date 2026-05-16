@@ -66,6 +66,20 @@ function GameApp({ gameId, onBack }) {
   const [sheet, setSheet] = useState(null);
   const [showWin, setShowWin] = useState(false);
   const [tmStep, setTmStep] = useState(0);
+  const pressTimers = useRef({});
+  function pressProps(key, fn) {
+    const start = () => {
+      fn();
+      pressTimers.current[key+'t'] = setTimeout(() => {
+        pressTimers.current[key+'i'] = setInterval(fn, 80);
+      }, 400);
+    };
+    const stop = () => {
+      clearTimeout(pressTimers.current[key+'t']);
+      clearInterval(pressTimers.current[key+'i']);
+    };
+    return { onPointerDown:e=>{e.preventDefault();start();}, onPointerUp:stop, onPointerLeave:stop, onPointerCancel:stop };
+  }
   const [toast, setToast] = useState(false);
   const [editState, setEditState] = useState(null);
   const [quickState, setQuickState] = useState(null);
@@ -546,7 +560,7 @@ function GameApp({ gameId, onBack }) {
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div style={{display:"flex",flexDirection:"column",gap:4,flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:4}}>
-                      <div onClick={()=>adjustScore(i,-1)} style={{width:44,height:44,borderRadius:8,
+                      <div {...pressProps(`adj${i}m`,()=>adjustScore(i,-1))} style={{width:44,height:44,borderRadius:8,
                         border:"1px solid rgba(196,74,58,.3)",background:"rgba(196,74,58,.15)",color:"#ff8070",
                         fontSize:"1.2rem",display:"flex",alignItems:"center",justifyContent:"center",
                         cursor:"pointer",userSelect:"none",flexShrink:0}}>−</div>
@@ -568,7 +582,7 @@ function GameApp({ gameId, onBack }) {
                             </>
                         }
                       </div>
-                      <div onClick={()=>adjustScore(i,+1)} style={{width:44,height:44,borderRadius:8,
+                      <div {...pressProps(`adj${i}p`,()=>adjustScore(i,+1))} style={{width:44,height:44,borderRadius:8,
                         border:"1px solid rgba(74,154,106,.3)",background:"rgba(74,154,106,.15)",color:"#6dcc90",
                         fontSize:"1.2rem",display:"flex",alignItems:"center",justifyContent:"center",
                         cursor:"pointer",userSelect:"none",flexShrink:0}}>＋</div>
@@ -700,13 +714,13 @@ function GameApp({ gameId, onBack }) {
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div onClick={()=>adjustTMScore(i,field.key,-1)}
+                        <div {...pressProps(`tm${i}${field.key}m`,()=>adjustTMScore(i,field.key,-1))}
                           style={{width:44,height:44,borderRadius:10,border:"1px solid rgba(196,74,58,.35)",
                             background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:"1.4rem",
                             display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
                         <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,
                           color:G.accent,minWidth:36,textAlign:"center",lineHeight:1}}>{val}</span>
-                        <div onClick={()=>adjustTMScore(i,field.key,+1)}
+                        <div {...pressProps(`tm${i}${field.key}p`,()=>adjustTMScore(i,field.key,+1))}
                           style={{width:44,height:44,borderRadius:10,border:`1px solid ${G.color}55`,
                             background:`${G.color}22`,color:G.accent,fontSize:"1.4rem",
                             display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>+</div>
