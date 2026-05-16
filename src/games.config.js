@@ -24,7 +24,7 @@ export const GAMES = {
     accent: "#f0c060",
     btnBg: "#c9933a",
     btnColor: "#12100e",
-    desc: "Le plus de points gagne\nObjectif : atteindre la limite",
+    desc: "Le moins de points gagne\nÉvitez d'atteindre la limite",
     defaultLimit: 15,
     limitLabel: "\u00C9limin\u00E9 \u00E0 partir de",
     limitMin: 5, limitMax: 50, limitStep: 1,
