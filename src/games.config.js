@@ -3,6 +3,7 @@ export const KEY_FLIP7  = "flip7-v2";
 export const KEY_SKYJO  = "skyjo-v1";
 export const KEY_RDN    = "rdn-v1";
 export const KEY_QWIRKLE = "qwirkle-v1";
+export const KEY_TM     = "tm-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -121,6 +122,44 @@ export const GAMES = {
     winMode: "highest",
     endOnDemand: true,
   },
+  terraforming: {
+    key: KEY_TM,
+    label: "Terraforming Mars",
+    emoji: "\u{1F30D}",
+    color: "#b5451b",
+    colorDim: "rgba(181,69,27,.14)",
+    border: "#3d2010",
+    surface: "#1e1208",
+    surface2: "#2a1a0e",
+    bg: "#120c05",
+    text: "#f5e4d0",
+    sub: "#8a6040",
+    accent: "#f5a623",
+    btnBg: "#b5451b",
+    btnColor: "#f5e4d0",
+    desc: "Le plus de points gagne\nScoresheet en fin de partie",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "sheet",
+    scoreFields: [
+      { key: "tr",         label: "TR",     default: 20 },
+      { key: "milestones", label: "Jalons", default: 0 },
+      { key: "awards",     label: "Prix",   default: 0 },
+      { key: "greeneries", label: "Forêts", default: 0 },
+      { key: "cities",     label: "Villes", default: 0 },
+      { key: "cards",      label: "Cartes", default: 0 },
+    ],
+    extensions: [
+      { key: "venusNext", label: "Venus Next", scoreField: { key: "venus",    label: "Vénus"    } },
+      { key: "colonies",  label: "Colonies",   scoreField: { key: "colonies", label: "Colonies" } },
+      { key: "prelude",   label: "Prelude",    scoreField: null },
+      { key: "turmoil",   label: "Turmoil",    scoreField: null },
+    ],
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999 };

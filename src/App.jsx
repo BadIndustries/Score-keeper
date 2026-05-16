@@ -49,12 +49,23 @@ function PlayerEditRow({ name, index, onChange, onRemove, canRemove }) {
 // ── GAME ENGINE ──────────────────────────────────────────────────────
 const MIN_PLAYERS = 2;
 
+function tmGetAllFields(G, exts = {}) {
+  return [
+    ...(G.scoreFields || []),
+    ...(G.extensions || []).filter(e => e.scoreField && exts[e.key]).map(e => e.scoreField),
+  ];
+}
+function computeTMTotal(scores) {
+  return Object.values(scores || {}).reduce((s, v) => s + (v || 0), 0);
+}
+
 function GameApp({ gameId, onBack }) {
   const G = GAMES[gameId];
   const [data, setData] = useState(()=>loadData(gameId));
   const [screen, setScreen] = useState("home");
   const [sheet, setSheet] = useState(null);
   const [showWin, setShowWin] = useState(false);
+  const [tmExpanded, setTmExpanded] = useState(null);
   const [toast, setToast] = useState(false);
   const [editState, setEditState] = useState(null);
   const [quickState, setQuickState] = useState(null);
@@ -107,32 +118,45 @@ function GameApp({ gameId, onBack }) {
     const grp = data.groups.find(x=>x.id===groupId);
     const limit = getGroupLimit(grp);
     update(a => {
-      a.activeGame = makeActiveGame(gameId, groupId, [...grp.players], limit);
+      const ag=makeActiveGame(gameId, groupId, [...grp.players], limit);
+      if(G.scoreType==="sheet"){
+        const exts=grp.tmExtensions||{};
+        const fields=tmGetAllFields(G,exts);
+        ag.tmScores=grp.players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
+        ag.tmExtensions=exts;
+        ag.totals=grp.players.map(()=>20);
+      }
+      a.activeGame=ag;
       return a;
     });
+    setTmExpanded(null);
     setScreen("game");
   }
 
   function openEditGroup(id) {
     const grp = id ? data.groups.find(x=>x.id===id) : null;
+    const tmG = GAMES.terraforming;
     setEditState({
       id,
       name: grp?.name||"",
       players: grp ? [...grp.players] : ["",""],
       limits: grp?.limits ? {...grp.limits} : {...DEFAULT_LIMITS},
+      tmExtensions: grp?.tmExtensions
+        ? {...grp.tmExtensions}
+        : Object.fromEntries((tmG.extensions||[]).map(e=>[e.key,false])),
     });
     setScreen("editGroup");
   }
   function saveGroup() {
-    const {id,name,players,limits}=editState;
+    const {id,name,players,limits,tmExtensions}=editState;
     const n=name.trim(); if(!n){alert("Donne un nom au groupe !");return;}
     const pl=players.map(p=>p.trim()).filter(p=>p.length>0); if(pl.length<MIN_PLAYERS){alert(`Il faut au moins ${MIN_PLAYERS} joueurs !`);return;}
     update(a=>{
       if(id){
         const grp=a.groups.find(x=>x.id===id);
-        grp.name=n; grp.players=pl; grp.limits=limits;
+        grp.name=n; grp.players=pl; grp.limits=limits; grp.tmExtensions=tmExtensions;
       } else {
-        a.groups.push({id:genId(),name:n,players:pl,limits:{...limits},pastGames:[]});
+        a.groups.push({id:genId(),name:n,players:pl,limits:{...limits},tmExtensions:{...tmExtensions},pastGames:[]});
       }
       return a;
     });
@@ -144,14 +168,29 @@ function GameApp({ gameId, onBack }) {
     setScreen("home");
   }
 
-  function openQuickSetup(){setQuickState({players:["",""],limit:G.defaultLimit});setScreen("quickSetup");}
+  function openQuickSetup(){
+    const init={players:["",""],limit:G.defaultLimit};
+    if(G.scoreType==="sheet") init.tmExtensions=Object.fromEntries((G.extensions||[]).map(e=>[e.key,false]));
+    setQuickState(init);
+    setTmExpanded(null);
+    setScreen("quickSetup");
+  }
   function startQuickGame(){
     const players=quickState.players.map(p=>p.trim()).filter(p=>p.length>0);
     if(players.length<MIN_PLAYERS){alert(`Il faut au moins ${MIN_PLAYERS} joueurs !`);return;}
     update(a=>{
-      a.activeGame = makeActiveGame(gameId, null, players, quickState.limit);
+      const ag=makeActiveGame(gameId, null, players, quickState.limit);
+      if(G.scoreType==="sheet"){
+        const exts=quickState.tmExtensions||{};
+        const fields=tmGetAllFields(G,exts);
+        ag.tmScores=players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
+        ag.tmExtensions=exts;
+        ag.totals=players.map(()=>20);
+      }
+      a.activeGame=ag;
       return a;
     });
+    setTmExpanded(null);
     setScreen("game");
   }
 
@@ -163,6 +202,14 @@ function GameApp({ gameId, onBack }) {
       const next = { ...prev, activeGame: { ...prev.activeGame, current: newCurrent } };
       persist(next);
       return next;
+    });
+  }
+  function adjustTMScore(i, key, d) {
+    update(a => {
+      const scores=a.activeGame.tmScores[i];
+      scores[key]=Math.max(0,(scores[key]||0)+d);
+      a.activeGame.totals[i]=computeTMTotal(scores);
+      return a;
     });
   }
   function toggleFlip7(i){ update(a=>{a.activeGame.flip7[i]=!a.activeGame.flip7[i];return a;}); }
@@ -387,6 +434,22 @@ function GameApp({ gameId, onBack }) {
               canRemove={editState.players.length>2}/>
           ))}
           {editState.players.length<6 && <Btn ghost full G={G} onClick={()=>setEditState(s=>({...s,players:[...s.players,""]}))}>＋ Ajouter un joueur</Btn>}
+
+          {(() => { const tmG=GAMES.terraforming; return tmG.extensions && tmG.extensions.length>0 && <>
+            <div style={{...S.sLabel,marginTop:10}}>Extensions Terraforming Mars</div>
+            {tmG.extensions.map(ext=>(
+              <div key={ext.key} onClick={()=>setEditState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))}
+                style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:G.surface,
+                  border:`1px solid ${G.border}`,borderRadius:10,padding:"11px 14px",marginBottom:6,cursor:"pointer"}}>
+                <span style={{fontSize:".9rem",color:G.text}}>{ext.label}{ext.scoreField && <span style={{fontSize:".72rem",color:G.sub,marginLeft:6}}>+VP</span>}</span>
+                <div style={{width:24,height:24,borderRadius:6,border:`2px solid ${editState.tmExtensions?.[ext.key]?"#b5451b":G.border}`,
+                  background:editState.tmExtensions?.[ext.key]?"rgba(181,69,27,.14)":"transparent",
+                  display:"flex",alignItems:"center",justifyContent:"center",color:"#f5a623",fontSize:".9rem",transition:"all .15s"}}>
+                  {editState.tmExtensions?.[ext.key]?"✓":""}
+                </div>
+              </div>
+            ))}
+          </>; })()}
         </div>
         <div style={S.footer}>
           <Btn ghost G={G} onClick={()=>setScreen("home")}>← Retour</Btn>
@@ -415,6 +478,21 @@ function GameApp({ gameId, onBack }) {
               canRemove={quickState.players.length>2}/>
           ))}
           {quickState.players.length<6 && <Btn ghost full G={G} onClick={()=>setQuickState(s=>({...s,players:[...s.players,""]}))}>＋ Ajouter un joueur</Btn>}
+          {G.scoreType==="sheet" && G.extensions && G.extensions.length>0 && <>
+            <div style={S.sLabel}>Extensions</div>
+            {G.extensions.map(ext=>(
+              <div key={ext.key} onClick={()=>setQuickState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))}
+                style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:G.surface,
+                  border:`1px solid ${G.border}`,borderRadius:10,padding:"11px 14px",marginBottom:6,cursor:"pointer"}}>
+                <span style={{fontSize:".9rem",color:G.text}}>{ext.label}{ext.scoreField && <span style={{fontSize:".72rem",color:G.sub,marginLeft:6}}>+VP</span>}</span>
+                <div style={{width:24,height:24,borderRadius:6,border:`2px solid ${quickState.tmExtensions?.[ext.key]?G.color:G.border}`,
+                  background:quickState.tmExtensions?.[ext.key]?G.colorDim:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+                  color:G.accent,fontSize:".9rem",transition:"all .15s"}}>
+                  {quickState.tmExtensions?.[ext.key]?"✓":""}
+                </div>
+              </div>
+            ))}
+          </>}
         </div>
         <div style={S.footer}>
           <Btn ghost G={G} onClick={()=>setScreen("home")}>← Retour</Btn>
@@ -423,7 +501,7 @@ function GameApp({ gameId, onBack }) {
       </>}
 
       {/* ── GAME ── */}
-      {screen==="game" && g && <>
+      {screen==="game" && g && !G.scoreType && <>
         <div style={S.topBar}>
           <div style={S.topTitle}>{G.emoji} {gameGroupName}</div>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -577,6 +655,72 @@ function GameApp({ gameId, onBack }) {
           <Btn ghost G={G} onClick={()=>{if(window.confirm("Quitter la partie ?"))goHome();}}>← Quitter</Btn>
           {G.endOnDemand && <Btn ghost G={G} onClick={finDePartie}>🏁 Fin</Btn>}
           <Btn primary G={G} style={{flex:1}} onClick={validerRound}>{G.emoji} Valider {roundLabel.toLowerCase()}</Btn>
+        </div>
+      </>}
+
+      {/* ── TM SCORESHEET ── */}
+      {screen==="game" && g && G.scoreType==="sheet" && <>
+        <div style={S.topBar}>
+          <div style={S.topTitle}>{G.emoji} {gameGroupName}</div>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            {g.tmExtensions && Object.entries(g.tmExtensions).filter(([,v])=>v).map(([k])=>{
+              const ext=(G.extensions||[]).find(e=>e.key===k);
+              return ext ? <div key={k} style={{background:G.colorDim,border:`1px solid ${G.color}`,
+                borderRadius:6,padding:"2px 8px",fontSize:".65rem",color:G.accent}}>{ext.label}</div> : null;
+            })}
+          </div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6,flex:1,padding:"8px 10px",overflowY:"auto"}}>
+          {g.players.map((name,i)=>{
+            const scores=g.tmScores?.[i]||{};
+            const total=g.totals[i]||0;
+            const isExpanded=tmExpanded===i;
+            const fields=tmGetAllFields(G,g.tmExtensions||{});
+            const ranked=[...g.totals].sort((a,b)=>b-a);
+            const rank=["🥇","🥈","🥉","","",""][ranked.indexOf(total)]||"";
+            return (
+              <div key={i} style={{background:G.surface,border:`1px solid ${isExpanded?G.color:G.border}`,
+                borderRadius:14,overflow:"hidden",flexShrink:0,transition:"border-color .2s"}}>
+                <div onClick={()=>setTmExpanded(isExpanded?null:i)}
+                  style={{display:"flex",alignItems:"center",padding:"10px 14px 10px 16px",
+                    cursor:"pointer",position:"relative"}}>
+                  <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,
+                    borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:".9rem",fontWeight:700,flex:1}}>{name}</span>
+                  <span style={{fontSize:".85rem",marginRight:6}}>{rank}</span>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,
+                    color:G.accent,lineHeight:1,marginRight:8}}>{total}</span>
+                  <span style={{color:G.sub,fontSize:".8rem"}}>{isExpanded?"▲":"▼"}</span>
+                </div>
+                {isExpanded && (
+                  <div style={{borderTop:`1px solid ${G.border}`,padding:"8px 12px 10px"}}>
+                    {fields.map(f=>(
+                      <div key={f.key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                        padding:"5px 0",borderBottom:`1px solid ${G.border}22`}}>
+                        <span style={{fontSize:".85rem",color:G.sub,flex:1}}>{f.label}</span>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div onClick={()=>adjustTMScore(i,f.key,-1)}
+                            style={{width:36,height:36,borderRadius:8,border:"1px solid rgba(196,74,58,.3)",
+                              background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:"1.2rem",
+                              display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
+                          <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.1rem",fontWeight:700,
+                            color:G.text,minWidth:28,textAlign:"center"}}>{scores[f.key]??0}</span>
+                          <div onClick={()=>adjustTMScore(i,f.key,+1)}
+                            style={{width:36,height:36,borderRadius:8,border:`1px solid ${G.color}55`,
+                              background:`${G.color}22`,color:G.accent,fontSize:"1.2rem",
+                              display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>+</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={S.footer}>
+          <Btn ghost G={G} onClick={()=>{if(window.confirm("Quitter la partie ?"))goHome();}}>← Quitter</Btn>
+          <Btn primary G={G} style={{flex:1}} onClick={finDePartie}>🏁 Fin de partie</Btn>
         </div>
       </>}
 
