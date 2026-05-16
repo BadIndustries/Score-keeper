@@ -1,18 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
 
 /**
- * Régression #46 : bouton Retour non cliquable dans l'écran Doigts.
+ * Regression #46 : bouton Retour non cliquable dans l'ecran Doigts.
  *
  * Cause : document touchstart + touchend appelaient e.preventDefault()
- * AVANT de tester la cible, bloquant toute synthèse de clic sur le bouton.
+ * avant de tester la cible, bloquant toute synthese de clic sur le bouton.
  *
  * Fix :
- *   1. Guard [data-back] dans onStart — early return sans preventDefault.
+ *   1. Guard [data-back] dans onStart -- early return sans preventDefault.
  *   2. onTouchEnd sur le bouton avec stopPropagation pour court-circuiter
  *      le listener document et naviguer directement.
  */
 
-// ── Réplique du guard onStart (App.jsx) ──────────────────────────────
 function makeOnStart(onFingersTouch) {
   return function onStart(e) {
     if (e.target.closest && e.target.closest('[data-back]')) return
@@ -21,7 +20,6 @@ function makeOnStart(onFingersTouch) {
   }
 }
 
-// ── Réplique du handler onTouchEnd du bouton Retour (App.jsx) ─────────
 function makeBackBtnTouchEnd(navigate) {
   return function onTouchEnd(e) {
     e.stopPropagation()
@@ -30,7 +28,6 @@ function makeBackBtnTouchEnd(navigate) {
   }
 }
 
-// ── Helper : faux élément avec .closest() ────────────────────────────
 function mockEl({ hasDataBack = false } = {}) {
   return {
     closest: (sel) =>
@@ -38,16 +35,14 @@ function mockEl({ hasDataBack = false } = {}) {
   }
 }
 
-// ── Helper : faux event ──────────────────────────────────────────────
 function mockEvent(target) {
   return { target, preventDefault: vi.fn(), stopPropagation: vi.fn(), changedTouches: [] }
 }
 
-// ────────────────────────────────────────────────────────────────────
-describe('Fingers — bouton Retour (régression #46)', () => {
+describe('Fingers -- bouton Retour (regression #46)', () => {
 
   describe('guard onStart : ignore les touches sur [data-back]', () => {
-    it('ne PAS appeler preventDefault si la cible porte data-back', () => {
+    it('ne pas appeler preventDefault si la cible porte data-back', () => {
       const onFingersTouch = vi.fn()
       const onStart = makeOnStart(onFingersTouch)
       const e = mockEvent(mockEl({ hasDataBack: true }))
@@ -58,7 +53,7 @@ describe('Fingers — bouton Retour (régression #46)', () => {
       expect(onFingersTouch).not.toHaveBeenCalled()
     })
 
-    it('appeler preventDefault si la cible ne porte PAS data-back', () => {
+    it('appeler preventDefault si la cible ne porte pas data-back', () => {
       const onFingersTouch = vi.fn()
       const onStart = makeOnStart(onFingersTouch)
       const e = mockEvent(mockEl({ hasDataBack: false }))
@@ -69,9 +64,8 @@ describe('Fingers — bouton Retour (régression #46)', () => {
       expect(onFingersTouch).toHaveBeenCalledWith(e)
     })
 
-    it('traiter un enfant dont l'ancêtre a data-back comme protégé', () => {
+    it('proteger un element enfant dont le parent a data-back', () => {
       const onStart = makeOnStart(vi.fn())
-      // Texte "← Retour" : target = span enfant, ancêtre = div[data-back]
       const childEl = {
         closest: (sel) =>
           sel === '[data-back]' ? { dataset: { back: 'true' } } : null,
@@ -102,7 +96,7 @@ describe('Fingers — bouton Retour (régression #46)', () => {
       expect(e.stopPropagation).toHaveBeenCalledOnce()
     })
 
-    it('appelle preventDefault pour éviter la double navigation via click synthétisé', () => {
+    it('appelle preventDefault pour eviter la double navigation', () => {
       const e = mockEvent(mockEl())
 
       makeBackBtnTouchEnd(vi.fn())(e)
@@ -110,7 +104,7 @@ describe('Fingers — bouton Retour (régression #46)', () => {
       expect(e.preventDefault).toHaveBeenCalledOnce()
     })
 
-    it('appelle stopPropagation AVANT de naviguer', () => {
+    it('appelle stopPropagation avant de naviguer', () => {
       const callOrder = []
       const e = {
         stopPropagation: vi.fn(() => callOrder.push('stopPropagation')),
@@ -127,12 +121,12 @@ describe('Fingers — bouton Retour (régression #46)', () => {
   })
 
   describe('attribut data-back : ciblage via closest()', () => {
-    it('closest("[data-back]") retourne le bon élément si data-back est présent', () => {
+    it('closest retourne le bon element si data-back est present', () => {
       const el = mockEl({ hasDataBack: true })
       expect(el.closest('[data-back]')).not.toBeNull()
     })
 
-    it('closest("[data-back]") retourne null sans l'attribut', () => {
+    it('closest retourne null sans data-back', () => {
       const el = mockEl({ hasDataBack: false })
       expect(el.closest('[data-back]')).toBeNull()
     })
