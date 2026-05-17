@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS, KEY_GROUPS } from './games.config.js';
 import { loadData, saveGroups, saveActiveGame, loadGroups } from './storage.js';
 import { makeActiveGame, computeTourScores, isGameOver, getWinnerIndex } from './gameLogic.js';
+import { Icon } from '@iconify/react';
 
 // ── SHARED UI ────────────────────────────────────────────────────────
 function Btn({ primary, full, sm, G, style, ...props }) {
@@ -48,6 +49,12 @@ function PlayerEditRow({ name, index, onChange, onRemove, canRemove }) {
 
 // ── GAME ENGINE ──────────────────────────────────────────────────────
 const MIN_PLAYERS = 2;
+
+function GIcon({ G, size = 22, style = {} }) {
+  if (G.icon) return <Icon icon={G.icon} width={size} height={size}
+    style={{ color: G.accent, flexShrink: 0, ...style }} />;
+  return <span style={style}>{G.emoji}</span>;
+}
 
 function tmGetAllFields(G, exts = {}) {
   return [
@@ -371,7 +378,7 @@ function GameApp({ gameId, onBack }) {
           ← Changer de jeu
         </div>
         <div style={{textAlign:"center",paddingTop:"max(20px, env(safe-area-inset-top, 0px))",paddingLeft:16,paddingRight:16,paddingBottom:10,flexShrink:0}}>
-          <div style={{fontFamily:"'Cinzel',serif",fontSize:"2rem",fontWeight:900,color:G.accent,letterSpacing:".1em"}}>{G.emoji} {G.label.toUpperCase()}</div>
+          <div style={{display:"flex",alignItems:"center",gap:10,fontFamily:"'Cinzel',serif",fontSize:"2rem",fontWeight:900,color:G.accent,letterSpacing:".1em"}}><GIcon G={G} size={32}/>{G.label.toUpperCase()}</div>
           <div style={{color:G.sub,fontSize:".62rem",letterSpacing:".2em",textTransform:"uppercase",marginTop:2}}>Score Keeper</div>
         </div>
         <div style={{...S.scroll,paddingBottom:"calc(env(safe-area-inset-bottom, 0px) + 80px)"}}>
@@ -425,7 +432,7 @@ function GameApp({ gameId, onBack }) {
           {Object.entries(GAMES).map(([gid, Gx])=>(
             <div key={gid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
               background:G.surface2,border:`1px solid ${G.border}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
-              <span style={{fontSize:".85rem",color:G.text}}>{Gx.emoji} {Gx.label}{!Gx.endOnDemand && <span style={{fontSize:".7rem",color:G.sub}}> — {Gx.limitLabel}</span>}</span>
+              <span style={{fontSize:".85rem",color:G.text,display:"flex",alignItems:"center",gap:6}}><GIcon G={Gx} size={16}/>{Gx.label}{!Gx.endOnDemand && <span style={{fontSize:".7rem",color:G.sub}}> — {Gx.limitLabel}</span>}</span>
               {!Gx.endOnDemand && <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}}))}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
@@ -517,7 +524,7 @@ function GameApp({ gameId, onBack }) {
       {/* ── GAME ── */}
       {screen==="game" && g && !G.scoreType && <>
         <div style={S.topBar}>
-          <div style={S.topTitle}>{G.emoji} {gameGroupName}</div>
+          <div style={S.topTitle}><GIcon G={G} size={18} style={{marginRight:6,verticalAlign:"middle"}}/>{gameGroupName}</div>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
             <div style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:8,padding:"4px 10px",
               textAlign:"center",fontSize:".58rem",letterSpacing:".12em",textTransform:"uppercase",color:G.sub}}>
@@ -682,7 +689,7 @@ function GameApp({ gameId, onBack }) {
         if(!isRecap && field) return (
           <>
             <div style={S.topBar}>
-              <div style={S.topTitle}>{G.emoji} {gameGroupName}</div>
+              <div style={S.topTitle}><GIcon G={G} size={18} style={{marginRight:6,verticalAlign:"middle"}}/>{gameGroupName}</div>
               <div style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:8,
                 padding:"4px 10px",textAlign:"center",fontSize:".58rem",letterSpacing:".1em",
                 textTransform:"uppercase",color:G.sub}}>
@@ -765,7 +772,7 @@ function GameApp({ gameId, onBack }) {
         return (
           <>
             <div style={S.topBar}>
-              <div style={S.topTitle}>{G.emoji} Récapitulatif</div>
+              <div style={S.topTitle}><GIcon G={G} size={18} style={{marginRight:6,verticalAlign:"middle"}}/>Récapitulatif</div>
             </div>
             <div style={{flex:1,overflowY:"auto",padding:"8px 12px"}}>
               <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
@@ -1020,7 +1027,7 @@ function GameApp({ gameId, onBack }) {
                           <div key={gid} style={{marginBottom:14}}>
                             <div style={{fontSize:".6rem",letterSpacing:".15em",textTransform:"uppercase",
                               color:G.sub,marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
-                              <span>{Gx.emoji}</span><span>{Gx.label}</span>
+                              <span style={{display:"flex",alignItems:"center",gap:4}}><GIcon G={Gx} size={14}/><span>{Gx.label}</span></span>
                               <span style={{opacity:.5}}>({gh.length} partie{gh.length>1?"s":""})</span>
                             </div>
                             {sorted.map(([name,st])=>{
@@ -1619,7 +1626,7 @@ function GameSelector({ onSelect }) {
             style={{background:`linear-gradient(135deg,${G.surface} 0%,${G.bg} 100%)`,
             border:`1px solid ${G.color}44`,borderRadius:20,padding:"20px 24px",cursor:"pointer",
             display:"flex",alignItems:"center",gap:16,boxShadow:`0 4px 24px ${G.colorDim}`}}>
-            <div style={{fontSize:"2.8rem",flexShrink:0,lineHeight:1}}>{G.emoji}</div>
+            <div style={{flexShrink:0,lineHeight:1,display:"flex",alignItems:"center"}}><GIcon G={G} size={44}/></div>
             <div style={{flex:1}}>
               <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.3rem",fontWeight:900,
                 color:G.accent,letterSpacing:".06em"}}>{G.label.toUpperCase()}</div>
