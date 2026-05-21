@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
 import { makeActiveGame, computeTourScores, isGameOver, getWinnerIndex } from '../gameLogic.js';
-import { Btn, GIcon, MIN_PLAYERS } from '../ui.jsx';
+import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
 
 function tmGetAllFields(G, exts = {}) {
   return [
@@ -341,12 +341,12 @@ export function GameApp({ gameId, onBack }) {
                 <div style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{grp.name}</div>
                 <div style={{fontSize:".68rem",color:G.sub,marginTop:2}}>
                   {grp.players.length} joueurs{!G.endOnDemand && ` · ${G.limitLabel.toLowerCase()} ${getGroupLimit(grp)} pts`}
-                  {(grp.pastGames && grp.pastGames.length > 0) ? " · " + grp.pastGames.length + " partie" + (grp.pastGames.length > 1 ? "s" : "") + " jouée" + (grp.pastGames.length > 1 ? "s" : "") : ""}</div>
+                  {(grp.pastGames?.length || 0) > 0 && " · " + grp.pastGames.length + " partie" + (grp.pastGames.length > 1 ? "s" : "") + " jouée" + (grp.pastGames.length > 1 ? "s" : "")}</div>
               </div>
               <div style={{display:"flex",gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
-                {grp.pastGames && grp.pastGames.length>0 && <div role="button" tabIndex={0} aria-label="Voir l'historique" style={S.iconBtn} onClick={()=>{setPastGroupId(grp.id);setSheet("past");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPastGroupId(grp.id);setSheet("past");}}}>🏆</div>}
+                {grp.pastGames?.length>0 && <div role="button" tabIndex={0} aria-label="Voir l'historique" style={S.iconBtn} onClick={()=>{setPastGroupId(grp.id);setSheet("past");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPastGroupId(grp.id);setSheet("past");}}}>🏆</div>}
                 <div role="button" tabIndex={0} aria-label="Statistiques" style={S.iconBtn} onClick={()=>{setStatsGrpId(grp.id);setSheet("stats");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setStatsGrpId(grp.id);setSheet("stats");}}}>📊</div>
-                <div role="button" tabIndex={0} aria-label="Modifier le groupe" style={S.iconBtn} onClick={()=>openEditGroup(grp.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openEditGroup(grp.id);}}}>✏️</div>
+                <div role="button" tabIndex={0} aria-label="Modifier le groupe" style={S.iconBtn} onClick={()=>openEditGroup(grp.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openEditGroup(grp.id);}}>✏️</div>
               </div>
             </div>
           ))}
@@ -407,7 +407,7 @@ export function GameApp({ gameId, onBack }) {
           {(() => { const tmG=GAMES.terraforming; return tmG.extensions && tmG.extensions.length>0 && <>
             <div style={{...S.sLabel,marginTop:10}}>Extensions Terraforming Mars</div>
             {tmG.extensions.map(ext=>(
-              <div key={ext.key} onClick={()=>setEditState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))} 
+              <div key={ext.key} onClick={()=>setEditState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))}
                 style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:G.surface,
                   border:`1px solid ${G.border}`,borderRadius:10,padding:"11px 14px",marginBottom:6,cursor:"pointer"}}>
                 <span style={{fontSize:".9rem",color:G.text}}>{ext.label}{ext.scoreField && <span style={{fontSize:".72rem",color:G.sub,marginLeft:6}}>+VP</span>}</span>
@@ -450,7 +450,7 @@ export function GameApp({ gameId, onBack }) {
           {G.scoreType==="sheet" && G.extensions && G.extensions.length>0 && <>
             <div style={S.sLabel}>Extensions</div>
             {G.extensions.map(ext=>(
-              <div key={ext.key} onClick={()=>setQuickState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))} 
+              <div key={ext.key} onClick={()=>setQuickState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))}
                 style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:G.surface,
                   border:`1px solid ${G.border}`,borderRadius:10,padding:"11px 14px",marginBottom:6,cursor:"pointer"}}>
                 <span style={{fontSize:".9rem",color:G.text}}>{ext.label}{ext.scoreField && <span style={{fontSize:".72rem",color:G.sub,marginLeft:6}}>+VP</span>}</span>
@@ -519,7 +519,7 @@ export function GameApp({ gameId, onBack }) {
                         border:"1px solid rgba(196,74,58,.3)",background:"rgba(196,74,58,.15)",color:"#ff8070",
                         fontSize:"1.2rem",display:"flex",alignItems:"center",justifyContent:"center",
                         cursor:"pointer",userSelect:"none",flexShrink:0}}>−</div>
-                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit===null){setDirectEdit(i);setDirectVal(String(cur));}}}>  
+                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit===null){setDirectEdit(i);setDirectVal(String(cur));}}}}>
                         {directEdit===i
                           ? <input type="number" autoFocus value={directVal}
                               onChange={e=>setDirectVal(e.target.value)}
@@ -573,7 +573,7 @@ export function GameApp({ gameId, onBack }) {
                       background:f7dbl?"rgba(239,68,68,.18)":G.surface2,
                       border:`1px solid ${f7dbl?"rgba(239,68,68,.6)":G.border}`,
                       borderRadius:10,padding:"5px 8px",cursor:"pointer",flexShrink:0,minWidth:58}}>
-                      <span style={{fontSize:"1rem"}}>✕2</span>
+                      <span style={{fontSize:"1rem"}}>×2</span>
                       <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
                         color:f7dbl?"#f87171":G.sub,fontWeight:f7dbl?700:400}}>
                         {f7dbl?"Doublé":"Double"}
@@ -586,7 +586,7 @@ export function GameApp({ gameId, onBack }) {
                       background:doubled?"rgba(239,68,68,.18)":G.surface2,
                       border:`1px solid ${doubled?"rgba(239,68,68,.6)":G.border}`,
                       borderRadius:10,padding:"5px 8px",cursor:"pointer",flexShrink:0,minWidth:58}}>
-                      <span style={{fontSize:"1rem"}}>✕2</span>
+                      <span style={{fontSize:"1rem"}}>×2</span>
                       <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
                         color:doubled?"#f87171":G.sub,fontWeight:doubled?700:400}}>
                         {doubled?"Doublé":"Double"}
@@ -708,9 +708,9 @@ export function GameApp({ gameId, onBack }) {
 
             <div style={S.footer}>
               <Btn ghost G={G} onClick={()=>{if(window.confirm("Quitter la partie ?"))goHome();}}>← Quitter</Btn>
-              {tmStep>0 && <Btn ghost G={G} onClick={()=>setTmStep(s=>s-1)}>◀</Btn>}
+              {tmStep>0 && <Btn ghost G={G} onClick={()=>setTmStep(s=>s-1)}>◄</Btn>}
               <Btn primary G={G} style={{flex:1}} onClick={()=>setTmStep(s=>s+1)}>
-                {tmStep===fields.length-1?"Voir le récap ▶":"Suivant ▶"}
+                {tmStep===fields.length-1?"Voir le récap ►":"Suivant ►"}
               </Btn>
             </div>
           </>
