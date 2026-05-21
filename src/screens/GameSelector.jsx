@@ -1,0 +1,298 @@
+import { useState } from "react";
+import { GAMES, MEDALS, KEY_GROUPS } from '../games.config.js';
+import { saveGroups, loadGroups } from '../storage.js';
+import { GIcon, MIN_PLAYERS } from '../ui.jsx';
+
+// ── SELECTOR SCREEN ───────────────────────────────────────────────────
+export function GameSelector({ onSelect }) {
+  const [showHistory,  setShowHistory]  = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [importMsg,    setImportMsg]    = useState(null);
+  const [updateMsg,    setUpdateMsg]    = useState(null);
+  const [updating,     setUpdating]     = useState(false);
+  const [groups]                        = useState(() => loadGroups());
+
+  const allHistory = () => {
+    const entries = [];
+    groups.forEach(grp => {
+      (grp.pastGames||[]).forEach(pg => entries.push({ ...pg, groupName: grp.name }));
+    });
+    return entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+  };
+
+  async function checkUpdate() {
+    setUpdating(true); setUpdateMsg(null);
+    try {
+      if (!('serviceWorker' in navigator)) {
+        setUpdateMsg('⚠️ Service Worker non supporté ici — recharge manuellement.');
+        setUpdating(false); return;
+      }
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) { window.location.reload(); return; }
+
+      // controllerchange = nouveau SW actif → recharge
+      const reload = () => window.location.reload();
+      navigator.serviceWorker.addEventListener('controllerchange', reload, { once: true });
+
+      await reg.update(); // fetch latest SW from server
+
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        // Fallback : iOS ne déclenche pas toujours controllerchange
+        setTimeout(reload, 1500);
+      } else if (reg.installing) {
+        reg.installing.addEventListener('statechange', e => {
+          if (e.target.state === 'installed') {
+            e.target.postMessage({ type: 'SKIP_WAITING' });
+            setTimeout(reload, 1500);
+          }
+        });
+      } else {
+        navigator.serviceWorker.removeEventListener('controllerchange', reload);
+        setUpdateMsg('✓ Vous avez déjà la dernière version !');
+        setUpdating(false);
+      }
+    } catch {
+      setUpdateMsg('⚠️ Impossible de vérifier — vérifie ta connexion.');
+      setUpdating(false);
+    }
+  }
+
+  function exportGroups() {
+    const json = localStorage.getItem(KEY_GROUPS) || '[]';
+    const file = new File([json], 'score-keeper-groupes.json', { type: 'application/json' });
+    if (navigator.canShare?.({ files: [file] })) {
+      navigator.share({ files: [file], title: 'Score Keeper — Groupes' }).catch(()=>{});
+    } else {
+      navigator.clipboard?.writeText(json)
+        .then(()=>setImportMsg('✓ Données copiées dans le presse-papiers'))
+        .catch(()=>setImportMsg('Copie impossible — ouvre la console et copie manuellement'));
+    }
+  }
+
+  function importGroups(file) {
+    if (file.size > 512 * 1024) { setImportMsg('⚠️ Fichier trop volumineux (max 512 Ko).'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const groups = JSON.parse(e.target.result);
+        if (!Array.isArray(groups)) throw new Error('not array');
+        for (const g of groups) {
+          if (typeof g.id !== 'string') throw new Error('id');
+          if (typeof g.name !== 'string' || g.name.length > 50) throw new Error('name');
+          if (!Array.isArray(g.players) || g.players.length > 20) throw new Error('players');
+          if (g.players.length < MIN_PLAYERS) throw new Error('players min');
+          for (const p of g.players) {
+            if (typeof p !== 'string' || p.trim().length === 0 || p.length > 24) throw new Error('player name');
+          }
+          if (g.pastGames !== undefined) {
+            if (!Array.isArray(g.pastGames)) throw new Error('pastGames');
+            for (const pg of g.pastGames) {
+              if (typeof pg !== 'object' || pg === null || typeof pg.winner !== 'string') throw new Error('pastGame');
+            }
+          }
+        }
+        saveGroups(groups);
+        setImportMsg(`✓ ${groups.length} groupe${groups.length>1?'s':''} restauré${groups.length>1?'s':''} !`);
+      } catch { setImportMsg('⚠️ Fichier invalide, rien n\'a été modifié.'); }
+    };
+    reader.readAsText(file);
+  }
+
+  return (
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:"#0a0a0f",color:"#e8e8f0",
+      width:"100%",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",
+      justifyContent:"center",
+      paddingTop:"max(30px, env(safe-area-inset-top, 0px))",
+      paddingLeft:"30px",paddingRight:"30px",
+      paddingBottom:"max(100px, calc(env(safe-area-inset-bottom, 0px) + 90px))",
+      backgroundImage:"radial-gradient(ellipse at 50% 30%,rgba(120,80,200,.15) 0%,transparent 60%)"}}>
+      <style>{`*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}`}</style>
+
+      {/* Bottom bar — history (right) + settings (left) */}
+      <div style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 20px)",
+        left:0,right:0,display:"flex",justifyContent:"space-between",padding:"0 20px",
+        pointerEvents:"none",zIndex:10}}>
+        <div onClick={()=>setShowSettings(true)} style={{pointerEvents:"auto",
+          background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.14)",
+          borderRadius:28,padding:"11px 20px",fontSize:".75rem",color:"rgba(255,255,255,.65)",
+          cursor:"pointer",display:"flex",alignItems:"center",gap:7,letterSpacing:".05em",
+          boxShadow:"0 4px 24px rgba(0,0,0,.45)",backdropFilter:"blur(8px)"}}>
+          ⚙️ Données
+        </div>
+        <div onClick={()=>setShowHistory(true)} style={{pointerEvents:"auto",
+          background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.14)",
+          borderRadius:28,padding:"11px 20px",fontSize:".75rem",color:"rgba(255,255,255,.65)",
+          cursor:"pointer",display:"flex",alignItems:"center",gap:7,letterSpacing:".05em",
+          boxShadow:"0 4px 24px rgba(0,0,0,.45)",backdropFilter:"blur(8px)"}}>
+          📋 Historique
+        </div>
+      </div>
+
+      <div style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",fontWeight:700,color:"rgba(255,255,255,.25)",
+        letterSpacing:".3em",textTransform:"uppercase",marginBottom:8}}>Score Keeper</div>
+      <div style={{fontFamily:"'Cinzel',serif",fontSize:"2rem",fontWeight:900,color:"#fff",
+        letterSpacing:".1em",marginBottom:6}}>Quel jeu ?</div>
+      <div style={{color:"rgba(255,255,255,.35)",fontSize:".75rem",marginBottom:32}}>Choisis ton jeu pour commencer</div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:14,width:"100%",maxWidth:320}}>
+        {/* Qui commence — premier */}
+        <div onClick={()=>onSelect("whoStarts")}
+          style={{background:"linear-gradient(135deg,#1a1a2e 0%,#0d0d1a 100%)",border:"1px solid #e6394644",
+          borderRadius:20,padding:"20px 24px",cursor:"pointer",display:"flex",alignItems:"center",gap:16,
+          boxShadow:"0 4px 24px rgba(230,57,70,.1)"}}>
+          <div style={{fontSize:"2.8rem",flexShrink:0,lineHeight:1}}>🎲</div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.3rem",fontWeight:900,color:"#e63946",letterSpacing:".06em"}}>QUI COMMENCE ?</div>
+            <div style={{fontSize:".7rem",color:"rgba(255,255,255,.4)",marginTop:4}}>Doigts sur l'écran ou roulette de noms</div>
+          </div>
+          <div style={{color:"#e63946",fontSize:"1.2rem",flexShrink:0,opacity:.6}}>›</div>
+        </div>
+
+        {/* Games */}
+        {Object.entries(GAMES).map(([id,G])=>(
+          <div key={id} onClick={()=>onSelect(id)}
+            style={{background:`linear-gradient(135deg,${G.surface} 0%,${G.bg} 100%)`,
+            border:`1px solid ${G.color}44`,borderRadius:20,padding:"20px 24px",cursor:"pointer",
+            display:"flex",alignItems:"center",gap:16,boxShadow:`0 4px 24px ${G.colorDim}`}}>
+            <div style={{flexShrink:0,lineHeight:1,display:"flex",alignItems:"center"}}><GIcon G={G} size={44}/></div>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.3rem",fontWeight:900,
+                color:G.accent,letterSpacing:".06em"}}>{G.label.toUpperCase()}</div>
+              {G.desc.split("\n").map((line,i)=>(
+                <div key={i} style={{fontSize:".7rem",color:"rgba(255,255,255,.4)",marginTop:i===0?4:1,letterSpacing:".04em"}}>{line}</div>
+              ))}
+            </div>
+            <div style={{color:G.accent,fontSize:"1.2rem",flexShrink:0,opacity:.6}}>›</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── SETTINGS SHEET ── */}
+      {showSettings && (
+        <div onClick={e=>{if(e.target===e.currentTarget){setShowSettings(false);setImportMsg(null);setUpdateMsg(null);}}}
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
+          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:50}}>
+          <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
+            width:"100%",display:"flex",flexDirection:"column"}}>
+            <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px"}}/>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+              padding:"0 16px 12px",borderBottom:"1px solid rgba(255,255,255,.07)"}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>⚙️ Données & sauvegarde</span>
+              <div style={{fontSize:".62rem",color:"rgba(255,255,255,.2)",letterSpacing:".08em"}}>
+                Version {__APP_VERSION__} — {__BUILD_DATE__}
+              </div>
+              <div onClick={()=>{setShowSettings(false);setImportMsg(null);setUpdateMsg(null);}}
+                style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
+                borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+            </div>
+            <div style={{padding:"16px 18px 32px",display:"flex",flexDirection:"column",gap:10}}>
+
+              {/* Update */}
+              <div onClick={updating ? undefined : checkUpdate}
+                style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
+                borderRadius:14,padding:"16px 18px",cursor:updating?"default":"pointer",
+                display:"flex",alignItems:"center",gap:14,opacity:updating?.6:1}}>
+                <span style={{fontSize:"1.6rem"}}>{updating?"⏳":"🔄"}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:".9rem",marginBottom:3}}>
+                    {updating?"Vérification en cours…":"Charger la dernière version"}
+                  </div>
+                  <div style={{fontSize:".72rem",color:"rgba(255,255,255,.4)"}}>
+                    Vérifie et installe la mise à jour, puis recharge l'app
+                  </div>
+                </div>
+              </div>
+              {updateMsg && (
+                <div style={{textAlign:"center",fontSize:".8rem",padding:"4px 10px",
+                  color:updateMsg.startsWith('✓')?"#4ade80":"#f87171"}}>
+                  {updateMsg}
+                </div>
+              )}
+
+              {/* Export */}
+              <div onClick={exportGroups}
+                style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
+                borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                <span style={{fontSize:"1.6rem"}}>📤</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:".9rem",marginBottom:3}}>Exporter mes groupes</div>
+                  <div style={{fontSize:".72rem",color:"rgba(255,255,255,.4)"}}>Partage un fichier .json vers Fichiers, AirDrop, Messages…</div>
+                </div>
+              </div>
+
+              {/* Import */}
+              <label style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
+                borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                <span style={{fontSize:"1.6rem"}}>📥</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:".9rem",marginBottom:3}}>Importer des groupes</div>
+                  <div style={{fontSize:".72rem",color:"rgba(255,255,255,.4)"}}>Sélectionne le fichier .json précédemment exporté</div>
+                </div>
+                <input type="file" accept=".json,application/json" style={{display:"none"}}
+                  onChange={e=>{if(e.target.files?.[0]) importGroups(e.target.files[0]);}}/>
+              </label>
+
+              {/* Feedback message */}
+              {importMsg && (
+                <div style={{textAlign:"center",fontSize:".8rem",padding:"10px",
+                  color: importMsg.startsWith('✓') ? "#4ade80" : "#f87171"}}>
+                  {importMsg}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── HISTORY OVERLAY ── */}
+      {showHistory && (()=>{
+        const history = allHistory();
+        return (
+          <div onClick={e=>{if(e.target===e.currentTarget)setShowHistory(false);}}
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
+            flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:50}}>
+            <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
+              width:"100%",maxHeight:"82%",display:"flex",flexDirection:"column"}}>
+              <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"0 16px 12px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}}>
+                <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>📋 Toutes les parties</span>
+                <div onClick={()=>setShowHistory(false)} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
+                  borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+              </div>
+              <div style={{overflowY:"auto",flex:1,padding:"8px 14px 24px"}}>
+                {history.length===0
+                  ? <div style={{color:"rgba(255,255,255,.3)",textAlign:"center",padding:30,fontSize:".85rem"}}>Aucune partie enregistrée</div>
+                  : history.map((pg,i)=>{
+                      const pgGame = GAMES[pg.gameId];
+                      const ds = new Date(pg.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
+                      const sorted = [...pg.scores].sort((a,b)=> pgGame?.winMode==="lowest" ? a.score-b.score : b.score-a.score);
+                      return (
+                        <div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.05)",display:"flex",alignItems:"flex-start",gap:10}}>
+                          <div style={{fontSize:"1.3rem",flexShrink:0,marginTop:2}}>{pgGame?.emoji||"🎮"}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                              <span style={{fontFamily:"'Cinzel',serif",fontSize:".82rem",color:pgGame?.accent||"#fff",fontWeight:700}}>🏆 {pg.winner}</span>
+                              <span style={{fontSize:".62rem",color:"rgba(255,255,255,.25)",background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 6px"}}>{pg.groupName}</span>
+                            </div>
+                            <div style={{fontSize:".63rem",color:"rgba(255,255,255,.35)",lineHeight:1.6}}>
+                              {sorted.map((s,j)=>`${MEDALS[j]} ${s.name} ${s.score}pts`).join(" · ")}
+                            </div>
+                          </div>
+                          <div style={{flexShrink:0,textAlign:"right"}}>
+                            <div style={{fontSize:".6rem",color:"rgba(255,255,255,.3)"}}>{ds}</div>
+                            <div style={{fontSize:".58rem",color:"rgba(255,255,255,.2)"}}>{pg.rounds} tour{pg.rounds>1?"s":""}</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                }
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
