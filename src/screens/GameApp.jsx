@@ -1,3 +1,4 @@
+import { useState, useCallback, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
 import { makeActiveGame, computeTourScores, isGameOver, getWinnerIndex } from '../gameLogic.js';
@@ -340,10 +341,10 @@ export function GameApp({ gameId, onBack }) {
                 <div style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{grp.name}</div>
                 <div style={{fontSize:".68rem",color:G.sub,marginTop:2}}>
                   {grp.players.length} joueurs{!G.endOnDemand && ` · ${G.limitLabel.toLowerCase()} ${getGroupLimit(grp)} pts`}
-                  {((grp.pastGames?.length) || 0) > 0 && " · " + grp.pastGames.length + " partie" + (grp.pastGames.length > 1 ? "s" : "") + " jouée" + (grp.pastGames.length > 1 ? "s" : "")}</div>
+                  {(grp.pastGames?.length || 0) > 0 && " · " + grp.pastGames.length + " partie" + (grp.pastGames.length > 1 ? "s" : "") + " jouée" + (grp.pastGames.length > 1 ? "s" : "")}</div>
               </div>
               <div style={{display:"flex",gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
-                {((grp.pastGames?.length) ?? 0) > 0 && <div role="button" tabIndex={0} aria-label="Voir l'historique" style={S.iconBtn} onClick={()=>{setPastGroupId(grp.id);setSheet("past");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPastGroupId(grp.id);setSheet("past");}}}>🏆</div>}
+                {(grp.pastGames?.length ?? 0) > 0 && <div role="button" tabIndex={0} aria-label="Voir l'historique" style={S.iconBtn} onClick={()=>{setPastGroupId(grp.id);setSheet("past");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPastGroupId(grp.id);setSheet("past");}}}>🏆</div>}
                 <div role="button" tabIndex={0} aria-label="Statistiques" style={S.iconBtn} onClick={()=>{setStatsGrpId(grp.id);setSheet("stats");}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setStatsGrpId(grp.id);setSheet("stats");}}}>📊</div>
                 <div role="button" tabIndex={0} aria-label="Modifier le groupe" style={S.iconBtn} onClick={()=>openEditGroup(grp.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openEditGroup(grp.id);}}}>✏️</div>
               </div>
@@ -361,8 +362,7 @@ export function GameApp({ gameId, onBack }) {
             </div>
           </div>
         </div>
-      </>
-}
+      </>}
 
       {/* ── EDIT GROUP ── */}
       {screen==="editGroup" && editState && <>
@@ -382,15 +382,13 @@ export function GameApp({ gameId, onBack }) {
               background:G.surface2,border:`1px solid ${G.border}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
               <span style={{fontSize:".85rem",color:G.text,display:"flex",alignItems:"center",gap:6}}><GIcon G={Gx} size={16}/>{Gx.label}{!Gx.endOnDemand && <span style={{fontSize:".7rem",color:G.sub}}> — {Gx.limitLabel}</span>}</span>
               {!Gx.endOnDemand && <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}}))
-}
+                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}}))}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",color:Gx.accent,minWidth:"3.5ch",textAlign:"center"}}>
                   {editState.limits[gid]??Gx.defaultLimit}
                 </span>
-                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.min(Gx.limitMax,(s.limits[gid]??Gx.defaultLimit)+Gx.limitStep)}}))
-}
+                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.min(Gx.limitMax,(s.limits[gid]??Gx.defaultLimit)+Gx.limitStep)}}))}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>＋</div>
               </div>}
@@ -427,8 +425,7 @@ export function GameApp({ gameId, onBack }) {
           {editState.id && <Btn ghost G={G} onClick={deleteGroup}>🗑</Btn>}
           <Btn primary G={G} style={{flex:1}} onClick={saveGroup}>Enregistrer</Btn>
         </div>
-      </>
-}
+      </>}
 
       {/* ── QUICK SETUP ── */}
       {screen==="quickSetup" && quickState && <>
@@ -441,8 +438,7 @@ export function GameApp({ gameId, onBack }) {
             <LimitCtrl G={G} value={quickState.limit} label={G.limitLabel}
               onChange={v=>setQuickState(s=>({...s,limit:v}))}
               min={G.limitMin} max={G.limitMax} step={G.limitStep}/>
-          </>
-}
+          </>}
           <div style={S.sLabel}>Joueurs <span style={{color:G.sub}}>(2 à 6)</span></div>
           {quickState.players.map((name,i)=>(
             <PlayerEditRow key={i} name={name} index={i}
@@ -465,15 +461,13 @@ export function GameApp({ gameId, onBack }) {
                 </div>
               </div>
             ))}
-          </>
-}
+          <>}
         </div>
         <div style={S.footer}>
           <Btn ghost G={G} onClick={()=>setScreen("home")}>← Retour</Btn>
           <Btn primary G={G} style={{flex:1}} onClick={startQuickGame}>{G.emoji} Commencer</Btn>
         </div>
-      </>
-}
+      </>}
 
       {/* ── GAME ── */}
       {screen==="game" && g && !G.scoreType && <>
@@ -525,8 +519,7 @@ export function GameApp({ gameId, onBack }) {
                         border:"1px solid rgba(196,74,58,.3)",background:"rgba(196,74,58,.15)",color:"#ff8070",
                         fontSize:"1.2rem",display:"flex",alignItems:"center",justifyContent:"center",
                         cursor:"pointer",userSelect:"none",flexShrink:0}}>−</div>
-                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit===null){setDirectEdit(i);setDirectVal(String(cur));}}}
->
+                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit===null){setDirectEdit(i);setDirectVal(String(cur));}}}}>
                         {directEdit===i
                           ? <input type="number" autoFocus value={directVal}
                               onChange={e=>setDirectVal(e.target.value)}
@@ -632,8 +625,7 @@ export function GameApp({ gameId, onBack }) {
           {G.endOnDemand && <Btn ghost G={G} onClick={finDePartie}>🏁 Fin</Btn>}
           <Btn primary G={G} style={{flex:1}} onClick={validerRound}>{G.emoji} Valider {roundLabel.toLowerCase()}</Btn>
         </div>
-      </>
-}
+      </>}
 
       {/* ── TM SCORESHEET (wizard step-by-step) ── */}
       {screen==="game" && g && G.scoreType==="sheet" && (()=>{
