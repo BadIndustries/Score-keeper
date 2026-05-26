@@ -362,8 +362,7 @@ export function GameApp({ gameId, onBack }) {
             </div>
           </div>
         </div>
-      </>
-}
+      </>}
 
       {/* ── EDIT GROUP ── */}
       {screen==="editGroup" && editState && <>
@@ -383,13 +382,13 @@ export function GameApp({ gameId, onBack }) {
               background:G.surface2,border:`1px solid ${G.border}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
               <span style={{fontSize:".85rem",color:G.text,display:"flex",alignItems:"center",gap:6}}><GIcon G={Gx} size={16}/>{Gx.label}{!Gx.endOnDemand && <span style={{fontSize:".7rem",color:G.sub}}> — {Gx.limitLabel}</span>}</span>
               {!Gx.endOnDemand && <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}})}
+                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}}))}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",color:Gx.accent,minWidth:"3.5ch",textAlign:"center"}}>
                   {editState.limits[gid]??Gx.defaultLimit}
                 </span>
-                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.min(Gx.limitMax,(s.limits[gid]??Gx.defaultLimit)+Gx.limitStep)}})}
+                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.min(Gx.limitMax,(s.limits[gid]??Gx.defaultLimit)+Gx.limitStep)}}))}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>＋</div>
               </div>}
@@ -426,8 +425,7 @@ export function GameApp({ gameId, onBack }) {
           {editState.id && <Btn ghost G={G} onClick={deleteGroup}>🗑</Btn>}
           <Btn primary G={G} style={{flex:1}} onClick={saveGroup}>Enregistrer</Btn>
         </div>
-      </>
-}
+      </>}
 
       {/* ── QUICK SETUP ── */}
       {screen==="quickSetup" && quickState && <>
@@ -440,8 +438,7 @@ export function GameApp({ gameId, onBack }) {
             <LimitCtrl G={G} value={quickState.limit} label={G.limitLabel}
               onChange={v=>setQuickState(s=>({...s,limit:v}))}
               min={G.limitMin} max={G.limitMax} step={G.limitStep}/>
-          </>
-}
+          </>}
           <div style={S.sLabel}>Joueurs <span style={{color:G.sub}}>(2 à 6)</span></div>
           {quickState.players.map((name,i)=>(
             <PlayerEditRow key={i} name={name} index={i}
@@ -464,15 +461,13 @@ export function GameApp({ gameId, onBack }) {
                 </div>
               </div>
             ))}
-          </>
-}
+          </>}
         </div>
         <div style={S.footer}>
           <Btn ghost G={G} onClick={()=>setScreen("home")}>← Retour</Btn>
           <Btn primary G={G} style={{flex:1}} onClick={startQuickGame}>{G.emoji} Commencer</Btn>
         </div>
-      </>
-}
+      </>}
 
       {/* ── GAME ── */}
       {screen==="game" && g && !G.scoreType && <>
@@ -630,8 +625,7 @@ export function GameApp({ gameId, onBack }) {
           {G.endOnDemand && <Btn ghost G={G} onClick={finDePartie}>🏁 Fin</Btn>}
           <Btn primary G={G} style={{flex:1}} onClick={validerRound}>{G.emoji} Valider {roundLabel.toLowerCase()}</Btn>
         </div>
-      </>
-}
+      </>}
 
       {/* ── TM SCORESHEET (wizard step-by-step) ── */}
       {screen==="game" && g && G.scoreType==="sheet" && (()=>{
