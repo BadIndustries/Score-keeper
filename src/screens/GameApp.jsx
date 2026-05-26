@@ -362,7 +362,8 @@ export function GameApp({ gameId, onBack }) {
             </div>
           </div>
         </div>
-      </>}
+      </>
+}
 
       {/* ── EDIT GROUP ── */}
       {screen==="editGroup" && editState && <>
@@ -382,13 +383,13 @@ export function GameApp({ gameId, onBack }) {
               background:G.surface2,border:`1px solid ${G.border}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
               <span style={{fontSize:".85rem",color:G.text,display:"flex",alignItems:"center",gap:6}}><GIcon G={Gx} size={16}/>{Gx.label}{!Gx.endOnDemand && <span style={{fontSize:".7rem",color:G.sub}}> — {Gx.limitLabel}</span>}</span>
               {!Gx.endOnDemand && <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}}))}
+                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.max(Gx.limitMin,(s.limits[gid]??Gx.defaultLimit)-Gx.limitStep)}})}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",color:Gx.accent,minWidth:"3.5ch",textAlign:"center"}}>
                   {editState.limits[gid]??Gx.defaultLimit}
                 </span>
-                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.min(Gx.limitMax,(s.limits[gid]??Gx.defaultLimit)+Gx.limitStep)}}))}
+                <div onClick={()=>setEditState(s=>({...s,limits:{...s.limits,[gid]:Math.min(Gx.limitMax,(s.limits[gid]??Gx.defaultLimit)+Gx.limitStep)}})}
                   style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:6,width:28,height:28,
                   display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>＋</div>
               </div>}
@@ -404,14 +405,14 @@ export function GameApp({ gameId, onBack }) {
           ))}
           {editState.players.length<6 && <Btn ghost full G={G} onClick={()=>setEditState(s=>({...s,players:[...s.players,""]}))}>＋ Ajouter un joueur</Btn>}
 
-          {(() => { const tmG=GAMES.terraforming; return tmG.extensions && tmG.extensions.length>0 && <>
+          {(() => { const tmG=GAMES.terraforming; return tmG.extensions && (tmG.extensions.length || 0) > 0 && <>
             <div style={{...S.sLabel,marginTop:10}}>Extensions Terraforming Mars</div>
             {tmG.extensions.map(ext=>(
               <div key={ext.key} onClick={()=>setEditState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))}
                 style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:G.surface,
                   border:`1px solid ${G.border}`,borderRadius:10,padding:"11px 14px",marginBottom:6,cursor:"pointer"}}>
                 <span style={{fontSize:".9rem",color:G.text}}>{ext.label}{ext.scoreField && <span style={{fontSize:".72rem",color:G.sub,marginLeft:6}}>+VP</span>}</span>
-                <div style={{width:24,height:24,borderRadius:6,border:`2px solid ${editState.tmExtensions?.[ext.key]?"#b5451b":G.border}`,
+                <div style={{width:24,height:24,borderRadius:6,border:"2px solid " + (editState.tmExtensions?.[ext.key] ? "#b5451b" : G.border),
                   background:editState.tmExtensions?.[ext.key]?"rgba(181,69,27,.14)":"transparent",
                   display:"flex",alignItems:"center",justifyContent:"center",color:"#f5a623",fontSize:".9rem",transition:"all .15s"}}>
                   {editState.tmExtensions?.[ext.key]?"✓":""}
@@ -425,7 +426,8 @@ export function GameApp({ gameId, onBack }) {
           {editState.id && <Btn ghost G={G} onClick={deleteGroup}>🗑</Btn>}
           <Btn primary G={G} style={{flex:1}} onClick={saveGroup}>Enregistrer</Btn>
         </div>
-      </>}
+      </>
+}
 
       {/* ── QUICK SETUP ── */}
       {screen==="quickSetup" && quickState && <>
@@ -438,7 +440,8 @@ export function GameApp({ gameId, onBack }) {
             <LimitCtrl G={G} value={quickState.limit} label={G.limitLabel}
               onChange={v=>setQuickState(s=>({...s,limit:v}))}
               min={G.limitMin} max={G.limitMax} step={G.limitStep}/>
-          </>}
+          </>
+}
           <div style={S.sLabel}>Joueurs <span style={{color:G.sub}}>(2 à 6)</span></div>
           {quickState.players.map((name,i)=>(
             <PlayerEditRow key={i} name={name} index={i}
@@ -447,27 +450,29 @@ export function GameApp({ gameId, onBack }) {
               canRemove={quickState.players.length>2}/>
           ))}
           {quickState.players.length<6 && <Btn ghost full G={G} onClick={()=>setQuickState(s=>({...s,players:[...s.players,""]}))}>＋ Ajouter un joueur</Btn>}
-          {G.scoreType==="sheet" && G.extensions && G.extensions.length>0 && <>
+          {G.scoreType==="sheet" && G.extensions && (G.extensions.length || 0) > 0 && <>
             <div style={S.sLabel}>Extensions</div>
             {G.extensions.map(ext=>(
               <div key={ext.key} onClick={()=>setQuickState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))}
                 style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:G.surface,
                   border:`1px solid ${G.border}`,borderRadius:10,padding:"11px 14px",marginBottom:6,cursor:"pointer"}}>
                 <span style={{fontSize:".9rem",color:G.text}}>{ext.label}{ext.scoreField && <span style={{fontSize:".72rem",color:G.sub,marginLeft:6}}>+VP</span>}</span>
-                <div style={{width:24,height:24,borderRadius:6,border:`2px solid ${quickState.tmExtensions?.[ext.key]?G.color:G.border}`,
+                <div style={{width:24,height:24,borderRadius:6,border:"2px solid " + (quickState.tmExtensions?.[ext.key] ? G.color : G.border),
                   background:quickState.tmExtensions?.[ext.key]?G.colorDim:"transparent",display:"flex",alignItems:"center",justifyContent:"center",
                   color:G.accent,fontSize:".9rem",transition:"all .15s"}}>
                   {quickState.tmExtensions?.[ext.key]?"✓":""}
                 </div>
               </div>
             ))}
-          <>}
+          </>
+}
         </div>
         <div style={S.footer}>
           <Btn ghost G={G} onClick={()=>setScreen("home")}>← Retour</Btn>
           <Btn primary G={G} style={{flex:1}} onClick={startQuickGame}>{G.emoji} Commencer</Btn>
         </div>
-      </>}
+      </>
+}
 
       {/* ── GAME ── */}
       {screen==="game" && g && !G.scoreType && <>
@@ -519,7 +524,7 @@ export function GameApp({ gameId, onBack }) {
                         border:"1px solid rgba(196,74,58,.3)",background:"rgba(196,74,58,.15)",color:"#ff8070",
                         fontSize:"1.2rem",display:"flex",alignItems:"center",justifyContent:"center",
                         cursor:"pointer",userSelect:"none",flexShrink:0}}>−</div>
-                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit===null){setDirectEdit(i);setDirectVal(String(cur));}}}}>
+                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit===null){setDirectEdit(i);setDirectVal(String(cur));}}}>
                         {directEdit===i
                           ? <input type="number" autoFocus value={directVal}
                               onChange={e=>setDirectVal(e.target.value)}
@@ -625,7 +630,8 @@ export function GameApp({ gameId, onBack }) {
           {G.endOnDemand && <Btn ghost G={G} onClick={finDePartie}>🏁 Fin</Btn>}
           <Btn primary G={G} style={{flex:1}} onClick={validerRound}>{G.emoji} Valider {roundLabel.toLowerCase()}</Btn>
         </div>
-      </>}
+      </>
+}
 
       {/* ── TM SCORESHEET (wizard step-by-step) ── */}
       {screen==="game" && g && G.scoreType==="sheet" && (()=>{
@@ -708,7 +714,7 @@ export function GameApp({ gameId, onBack }) {
 
             <div style={S.footer}>
               <Btn ghost G={G} onClick={()=>{if(window.confirm("Quitter la partie ?"))goHome();}}>← Quitter</Btn>
-              {tmStep>0 && <Btn ghost G={G} onClick={()=>setTmStep(s=>s-1)}>◀</Btn>}
+              {tmStep > 0 && <Btn ghost G={G} onClick={()=>setTmStep(s=>s-1)}>◀</Btn>}
               <Btn primary G={G} style={{flex:1}} onClick={()=>setTmStep(s=>s+1)}>
                 {tmStep===fields.length-1?"Voir le récap ▶":"Suivant ▶"}
               </Btn>
