@@ -62,7 +62,8 @@ export function WhoStartsApp({ onBack }) {
   const fTouchesRef = useRef(new Map());
   const fLockedRef = useRef(false);
   const fFreeRef    = useRef([0,1,2,3,4]);
-  const fTimerRef   = useRef(null);
+  const fTimerRef    = useRef(null);
+  const fDebounceRef = useRef(null);
 
   const [groups] = useState(() => loadGroups());
 
@@ -140,6 +141,7 @@ export function WhoStartsApp({ onBack }) {
       document.body.appendChild(d); return d;
     };
     const cancelCD=()=>{
+      if(fDebounceRef.current){clearTimeout(fDebounceRef.current);fDebounceRef.current=null;}
       if(fTimerRef.current){clearInterval(fTimerRef.current);fTimerRef.current=null;}
       if(fStateRef.current==="countdown"){ fStateRef.current="waiting"; fLockedRef.current=false; }
       setFCdNum(3);
@@ -182,7 +184,8 @@ export function WhoStartsApp({ onBack }) {
       }
       fStateRef.current="waiting";
       const n=fTouchesRef.current.size; setFCount(n); setFPhase(n>0?"waiting":"idle");
-      if(n>=MIN_T) startCD();
+      if(fDebounceRef.current) clearTimeout(fDebounceRef.current);
+      if(n>=MIN_T){fDebounceRef.current=setTimeout(()=>{fDebounceRef.current=null;startCD();},300);}
     };
     const onMove=(e)=>{
       e.preventDefault();
@@ -211,6 +214,7 @@ export function WhoStartsApp({ onBack }) {
       document.removeEventListener("touchmove",   onMove);
       document.removeEventListener("touchend",    onEnd);
       document.removeEventListener("touchcancel", onEnd);
+      if(fDebounceRef.current){clearTimeout(fDebounceRef.current);fDebounceRef.current=null;}
       if(fTimerRef.current) clearInterval(fTimerRef.current);
       touchMap.forEach(t=>t.el.remove());
       touchMap.clear(); fFreeRef.current=[0,1,2,3,4]; fStateRef.current="idle";
