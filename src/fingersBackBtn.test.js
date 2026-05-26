@@ -141,13 +141,13 @@ function makeFingerLogic(MIN_T = 2, DEBOUNCE_MS = 300) {
   let locked = false
   let state = 'idle'
   let debounceRef = null
-  let countdownStarted = false
+  let countdownStarts = 0
 
   const startCD = () => {
     if (state === 'countdown') return
     locked = true
     state = 'countdown'
-    countdownStarted = true
+    countdownStarts++
   }
 
   const cancelCD = () => {
@@ -156,7 +156,20 @@ function makeFingerLogic(MIN_T = 2, DEBOUNCE_MS = 300) {
   }
 
   const onStart = (changedTouches) => {
-    if (locked) return
+    if (locked) {
+      if (state === 'countdown') {
+        let added = false
+        for (const t of changedTouches) {
+          if (touchMap.size >= 5) break
+          const idx = freeSlots.shift()
+          if (idx === undefined) break
+          touchMap.set(t.identifier, { idx })
+          added = true
+        }
+        if (added) { cancelCD(); startCD() }
+      }
+      return
+    }
     for (const t of changedTouches) {
       if (touchMap.size >= 5) break
       const idx = freeSlots.shift()
@@ -186,7 +199,8 @@ function makeFingerLogic(MIN_T = 2, DEBOUNCE_MS = 300) {
     get size() { return touchMap.size },
     get state() { return state },
     get locked() { return locked },
-    get countdownStarted() { return countdownStarted },
+    get countdownStarted() { return countdownStarts > 0 },
+    get countdownStarts() { return countdownStarts },
   }
 }
 
@@ -265,5 +279,53 @@ describe('Fingers -- multi-doigts (3, 4, 5)', () => {
     const logic = makeFingerLogic()
     logic.onStart([touch(1), touch(2), touch(3), touch(4), touch(5), touch(6)])
     expect(logic.size).toBe(5)
+  })
+})
+
+describe('Fingers -- ajout de doigt pendant le décompte', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('ajouter un doigt pendant le countdown relance le décompte depuis 3', () => {
+    const logic = makeFingerLogic()
+    logic.onStart([touch(1), touch(2)])
+    vi.advanceTimersByTime(300)           // debounce → startCD
+    expect(logic.state).toBe('countdown')
+    expect(logic.countdownStarts).toBe(1)
+
+    logic.onStart([touch(3)])             // 3e doigt pendant le décompte
+    expect(logic.size).toBe(3)
+    expect(logic.state).toBe('countdown') // toujours en countdown
+    expect(logic.countdownStarts).toBe(2) // redémarré une fois
+  })
+
+  it('le countdown est relancé à chaque ajout de doigt', () => {
+    const logic = makeFingerLogic()
+    logic.onStart([touch(1), touch(2)])
+    vi.advanceTimersByTime(300)
+    logic.onStart([touch(3)])
+    logic.onStart([touch(4)])
+    logic.onStart([touch(5)])
+    expect(logic.size).toBe(5)
+    expect(logic.countdownStarts).toBe(4) // 1 initial + 3 redémarrages
+  })
+
+  it("ajouter un doigt à 5 doigts déjà présents n'affecte pas le countdown", () => {
+    const logic = makeFingerLogic()
+    logic.onStart([touch(1), touch(2), touch(3), touch(4), touch(5)])
+    vi.advanceTimersByTime(300)
+    const startsBefore = logic.countdownStarts
+    logic.onStart([touch(6)])             // map pleine, rien ne s'ajoute
+    expect(logic.countdownStarts).toBe(startsBefore) // pas de redémarrage
+  })
+
+  it('lever un doigt pendant le countdown annule le décompte si < MIN_T restants', () => {
+    const logic = makeFingerLogic()
+    logic.onStart([touch(1), touch(2)])
+    vi.advanceTimersByTime(300)
+    expect(logic.state).toBe('countdown')
+    logic.onEnd([touch(1), touch(2)])     // plus aucun doigt
+    expect(logic.state).toBe('idle')
+    expect(logic.locked).toBe(false)
   })
 })

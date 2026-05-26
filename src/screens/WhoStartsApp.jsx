@@ -173,7 +173,18 @@ export function WhoStartsApp({ onBack }) {
     const onStart=(e)=>{
       if (e.target.closest && e.target.closest('[data-back]')) return;
       if (fLockedRef.current) {
-        if (fStateRef.current==="result"){ e.preventDefault(); reset(); }
+        if (fStateRef.current==="result"){ e.preventDefault(); reset(); return; }
+        if (fStateRef.current==="countdown"){
+          e.preventDefault();
+          let added=false;
+          for(const t of e.changedTouches){
+            if(fTouchesRef.current.size>=5) break;
+            const idx=fFreeRef.current.shift(); if(idx===undefined) break;
+            fTouchesRef.current.set(t.identifier,{el:makeDot(t.clientX,t.clientY,idx),idx});
+            added=true;
+          }
+          if(added){ const n=fTouchesRef.current.size; setFCount(n); cancelCD(); startCD(); }
+        }
         return;
       }
       e.preventDefault();
