@@ -4,6 +4,7 @@ export const KEY_SKYJO  = "skyjo-v1";
 export const KEY_RDN    = "rdn-v1";
 export const KEY_QWIRKLE = "qwirkle-v1";
 export const KEY_TM     = "tm-v1";
+export const KEY_REBIRTH = "rebirth-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -166,6 +167,37 @@ export const GAMES = {
       { key: "turmoil",   label: "Turmoil",    scoreField: null },
     ],
   },
+  rebirth: {
+    key: KEY_REBIRTH,
+    label: "Rebirth",
+    emoji: "🏰",
+    color: "#3a7d54",
+    colorDim: "rgba(58,125,84,.14)",
+    border: "#1e3828",
+    surface: "#111e16",
+    surface2: "#192a1e",
+    bg: "#0c1510",
+    text: "#e8f0e0",
+    sub: "#6a9a7a",
+    accent: "#c9a84c",
+    btnBg: "#3a7d54",
+    btnColor: "#e8f0e0",
+    desc: "Le plus de points gagne\nScoresheet en fin de partie",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "sheet",
+    scoreFields: [
+      { key: "farms",       label: "Fermes",      emoji: "🌾", default: 0 },
+      { key: "castles",     label: "Châteaux",    emoji: "🏰", default: 0, step: 5, hint: "5 pts par château" },
+      { key: "communities", label: "Communautés", emoji: "🏘️", default: 0 },
+      { key: "missions",    label: "Missions",    emoji: "🎯", default: 0 },
+      { key: "ports",       label: "Ports",       emoji: "⚓", default: 0 },
+    ],
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, rebirth: 999 };

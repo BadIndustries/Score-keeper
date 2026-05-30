@@ -93,7 +93,8 @@ export function GameApp({ gameId, onBack }) {
         const fields=tmGetAllFields(G,exts);
         ag.tmScores=grp.players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
         ag.tmExtensions=exts;
-        ag.totals=grp.players.map(()=>20);
+        const initTotalGrp=fields.reduce((s,f)=>s+(f.default??0),0);
+        ag.totals=grp.players.map(()=>initTotalGrp);
       }
       a.activeGame=ag;
       return a;
@@ -154,7 +155,8 @@ export function GameApp({ gameId, onBack }) {
         const fields=tmGetAllFields(G,exts);
         ag.tmScores=players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
         ag.tmExtensions=exts;
-        ag.totals=players.map(()=>20);
+        const initTotalQuick=fields.reduce((s,f)=>s+(f.default??0),0);
+        ag.totals=players.map(()=>initTotalQuick);
       }
       a.activeGame=ag;
       return a;
@@ -649,6 +651,7 @@ export function GameApp({ gameId, onBack }) {
               <div style={{textAlign:"center",marginBottom:8}}>
                 <div style={{fontSize:"1.6rem",lineHeight:1}}>{field.emoji||"📋"}</div>
                 <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.15rem",fontWeight:700,color:G.accent,marginTop:4}}>{field.label}</div>
+                {field.hint && <div style={{fontSize:".72rem",color:G.sub,marginTop:3}}>{field.hint}</div>}
               </div>
               <div style={{display:"flex",gap:4,marginBottom:4}}>
                 {fields.map((_,idx)=>(
@@ -669,13 +672,13 @@ export function GameApp({ gameId, onBack }) {
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div {...pressProps("tm"+i+field.key+"m",()=>adjustTMScore(i,field.key,-1))}
+                        <div {...pressProps("tm"+i+field.key+"m",()=>adjustTMScore(i,field.key,-(field.step||1)))}
                           style={{width:44,height:44,borderRadius:10,border:"1px solid rgba(196,74,58,.35)",
                             background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:"1.4rem",
                             display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
                         <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,
                           color:G.accent,minWidth:36,textAlign:"center",lineHeight:1}}>{val}</span>
-                        <div {...pressProps("tm"+i+field.key+"p",()=>adjustTMScore(i,field.key,+1))}
+                        <div {...pressProps("tm"+i+field.key+"p",()=>adjustTMScore(i,field.key,field.step||1))}
                           style={{width:44,height:44,borderRadius:10,border:`1px solid ${G.color}55`,
                             background:`${G.color}22`,color:G.accent,fontSize:"1.4rem",
                             display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>+</div>
