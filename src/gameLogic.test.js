@@ -44,15 +44,18 @@ describe('computeTourScores', () => {
     })
   })
 
-  describe('Skyjo -- double si actif et score > 0', () => {
+  describe('Skyjo -- double si actif et score != 0', () => {
     it('double les scores positifs', () => {
       expect(computeTourScores('skyjo', [5, 3], [], [true, true])).toEqual([10, 6])
     })
-    it('ne double pas les scores negatifs', () => {
-      expect(computeTourScores('skyjo', [-5, 3], [], [true, true])).toEqual([-5, 6])
+    it('double les scores negatifs', () => {
+      expect(computeTourScores('skyjo', [-5, 3], [], [true, true])).toEqual([-10, 6])
     })
     it('ne double pas zero', () => {
       expect(computeTourScores('skyjo', [0, 3], [], [true, true])).toEqual([0, 6])
+    })
+    it('double non actif : score negatif inchange', () => {
+      expect(computeTourScores('skyjo', [-5, 3], [], [false, false])).toEqual([-5, 3])
     })
   })
 })

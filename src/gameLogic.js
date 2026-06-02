@@ -24,7 +24,7 @@ export function computeTourScores(gameId, current, flip7 = [], doubled = [], fli
     });
   }
   if (gameId === 'skyjo') {
-    return current.map((pts, i) => doubled[i] && pts > 0 ? pts * 2 : pts);
+    return current.map((pts, i) => doubled[i] && pts !== 0 ? pts * 2 : pts);
   }
   return [...current];
 }

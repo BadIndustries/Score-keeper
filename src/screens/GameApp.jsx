@@ -81,8 +81,12 @@ export function GameApp({ gameId, onBack }) {
   }
 
   function startGroupGame(groupId) {
-    if (data.activeGame?.groupId===groupId) {
-      if (window.confirm("Une partie est en cours. La reprendre ?")) { setScreen("game"); return; }
+    if (data.activeGame) {
+      if (data.activeGame.groupId===groupId) {
+        if (window.confirm("Une partie est en cours. La reprendre ?")) { setScreen("game"); return; }
+      } else {
+        if (!window.confirm("Une autre partie est en cours. L'abandonner et en commencer une nouvelle ?")) return;
+      }
     }
     const grp = data.groups.find(x=>x.id===groupId);
     const limit = getGroupLimit(grp);
@@ -260,6 +264,7 @@ export function GameApp({ gameId, onBack }) {
         const grp=a.groups.find(x=>x.id===g.groupId);
         if(grp) recordPastGame(grp, gameId, g, G.winMode);
       }
+      a.activeGame=null;
       return a;
     });
     setShowWin(true);
@@ -906,7 +911,7 @@ export function GameApp({ gameId, onBack }) {
           (pg.scores||[]).forEach(s=>{
             if(!overall[s.name]) overall[s.name]={games:0,wins:0};
             overall[s.name].games++;
-            if(s.name===pg.winner) overall[s.name].wins++;
+            if(pg.winners?.includes(s.name)||s.name===pg.winner) overall[s.name].wins++;
           });
         });
         const players = Object.entries(overall).sort((a,b)=>b[1].wins-a[1].wins);
@@ -974,7 +979,7 @@ export function GameApp({ gameId, onBack }) {
                           (pg.scores||[]).forEach(s=>{
                             if(!pp[s.name]) pp[s.name]={games:0,wins:0,scores:[]};
                             pp[s.name].games++; pp[s.name].scores.push(s.score);
-                            if(s.name===pg.winner) pp[s.name].wins++;
+                            if(pg.winners?.includes(s.name)||s.name===pg.winner) pp[s.name].wins++;
                           });
                         });
                         const sorted=Object.entries(pp).sort((a,b)=>b[1].wins-a[1].wins);
