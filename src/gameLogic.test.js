@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame } from './gameLogic.js'
 
 describe('computeTourScores', () => {
   describe('Odin / Roi des Nains / Skyjo (sans double)', () => {
@@ -126,5 +126,82 @@ describe('makeActiveGame', () => {
     const game = makeActiveGame('odin', null, players, 15)
     players.push('Carol')
     expect(game.players).toHaveLength(2)
+  })
+})
+
+describe('recordPastGame', () => {
+  function makeAg(players, totals, opts = {}) {
+    return {
+      players,
+      totals,
+      ...('tour' in opts ? { tour: opts.tour } : { tour: 3 }),
+      ...('manche' in opts ? { manche: opts.manche } : {}),
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }
+  }
+
+  it('cree pastGames si absent et enregistre la partie', () => {
+    const grp = {}
+    const ag = makeAg(['Alice', 'Bob'], [120, 80])
+    recordPastGame(grp, 'flip7', ag, 'highest')
+    expect(grp.pastGames).toHaveLength(1)
+    expect(grp.pastGames[0].gameId).toBe('flip7')
+    expect(grp.pastGames[0].winner).toBe('Alice')
+    expect(grp.pastGames[0].rounds).toBe(3)
+  })
+
+  it('winMode highest: gagnant = score le plus eleve', () => {
+    const grp = { pastGames: [] }
+    recordPastGame(grp, 'flip7', makeAg(['Alice', 'Bob', 'Carol'], [80, 200, 150]), 'highest')
+    expect(grp.pastGames[0].winner).toBe('Bob')
+  })
+
+  it('winMode lowest: gagnant = score le plus bas', () => {
+    const grp = { pastGames: [] }
+    recordPastGame(grp, 'odin', makeAg(['Alice', 'Bob'], [12, 5]), 'lowest')
+    expect(grp.pastGames[0].winner).toBe('Bob')
+  })
+
+  it('egalite: winner contient les deux noms separes par une virgule', () => {
+    const grp = { pastGames: [] }
+    recordPastGame(grp, 'odin', makeAg(['Alice', 'Bob', 'Carol'], [5, 5, 10]), 'lowest')
+    expect(grp.pastGames[0].winners).toEqual(['Alice', 'Bob'])
+    expect(grp.pastGames[0].winner).toBe('Alice, Bob')
+  })
+
+  it('enregistre les scores de chaque joueur', () => {
+    const grp = { pastGames: [] }
+    recordPastGame(grp, 'skyjo', makeAg(['Alice', 'Bob'], [30, 90]), 'lowest')
+    expect(grp.pastGames[0].scores).toEqual([
+      { name: 'Alice', score: 30 },
+      { name: 'Bob', score: 90 },
+    ])
+  })
+
+  it('ajoute en tete (unshift): la partie la plus recente est en premier', () => {
+    const grp = { pastGames: [{ gameId: 'old' }] }
+    recordPastGame(grp, 'odin', makeAg(['Alice', 'Bob'], [5, 10]), 'lowest')
+    expect(grp.pastGames[0].gameId).toBe('odin')
+    expect(grp.pastGames[1].gameId).toBe('old')
+  })
+
+  it('limite a 20 parties', () => {
+    const grp = { pastGames: Array.from({ length: 20 }, (_, i) => ({ gameId: 'x', i })) }
+    recordPastGame(grp, 'flip7', makeAg(['Alice', 'Bob'], [200, 100]), 'highest')
+    expect(grp.pastGames).toHaveLength(20)
+    expect(grp.pastGames[0].gameId).toBe('flip7')
+  })
+
+  it('utilise manche si tour est undefined', () => {
+    const grp = { pastGames: [] }
+    const ag = makeAg(['Alice', 'Bob'], [10, 5], { tour: undefined, manche: 7 })
+    recordPastGame(grp, 'odin', ag, 'lowest')
+    expect(grp.pastGames[0].rounds).toBe(7)
+  })
+
+  it('retourne le groupe modifie', () => {
+    const grp = { pastGames: [] }
+    const result = recordPastGame(grp, 'odin', makeAg(['Alice'], [5]), 'lowest')
+    expect(result).toBe(grp)
   })
 })

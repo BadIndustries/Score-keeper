@@ -40,3 +40,20 @@ export function getWinnerIndex(totals, winMode) {
     ? totals.indexOf(Math.min(...totals))
     : totals.indexOf(Math.max(...totals));
 }
+
+export function recordPastGame(grp, gameId, ag, winMode) {
+  if (!grp.pastGames) grp.pastGames = [];
+  const winnerIdx = getWinnerIndex(ag.totals, winMode);
+  const bestScore = winMode === 'lowest' ? Math.min(...ag.totals) : Math.max(...ag.totals);
+  const winners = ag.players.filter((_, i) => ag.totals[i] === bestScore);
+  grp.pastGames.unshift({
+    gameId,
+    date: ag.startedAt,
+    rounds: ag.tour || ag.manche,
+    winner: winners.length > 1 ? winners.join(', ') : ag.players[winnerIdx],
+    winners,
+    scores: ag.players.map((name, i) => ({ name, score: ag.totals[i] })),
+  });
+  if (grp.pastGames.length > 20) grp.pastGames = grp.pastGames.slice(0, 20);
+  return grp;
+}

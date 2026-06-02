@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, getWinnerIndex } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, getWinnerIndex, recordPastGame } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
 
 function tmGetAllFields(G, exts = {}) {
@@ -194,6 +194,7 @@ export function GameApp({ gameId, onBack }) {
   }
 
   function validerRound(){
+    let didWin=false;
     update(a=>{
       const g=a.activeGame;
       let tourScores;
@@ -214,22 +215,9 @@ export function GameApp({ gameId, onBack }) {
       if(won){
         if(g.groupId){
           const grp=a.groups.find(x=>x.id===g.groupId);
-          if(grp){
-            if(!grp.pastGames)grp.pastGames=[];
-            const winnerIdx = getWinnerIndex(g.totals, G.winMode);
-            const bestScore = G.winMode==="lowest" ? Math.min(...g.totals) : Math.max(...g.totals);
-            const winners = g.players.filter((_,i)=>g.totals[i]===bestScore);
-            grp.pastGames.unshift({
-              gameId,
-              date:g.startedAt, rounds:g.tour||g.manche,
-              winner: winners.length>1 ? winners.join(', ') : g.players[winnerIdx],
-              winners,
-              scores:g.players.map((name,i)=>({name,score:g.totals[i]}))
-            });
-            if(grp.pastGames.length>20)grp.pastGames=grp.pastGames.slice(0,20);
-          }
+          if(grp) recordPastGame(grp, gameId, g, G.winMode);
         }
-        setShowWin(true);
+        didWin=true;
       } else {
         g.tour=(g.tour||1)+1; g.manche=(g.manche||1)+1;
         g.current=g.players.map(()=>0);
@@ -238,16 +226,27 @@ export function GameApp({ gameId, onBack }) {
       }
       return a;
     });
+    if(didWin) setShowWin(true);
   }
 
   function rejouer(){
     if(!g)return;
-    const{groupId,players,limit}=g;
+    const{groupId,players,limit,tmExtensions}=g;
     setShowWin(false);
     update(a=>{
-      a.activeGame = makeActiveGame(gameId, groupId, [...players], limit);
+      const ag=makeActiveGame(gameId, groupId, [...players], limit);
+      if(G.scoreType==="sheet"){
+        const exts=tmExtensions||{};
+        const fields=tmGetAllFields(G,exts);
+        ag.tmScores=players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
+        ag.tmExtensions=exts;
+        const initTotal=fields.reduce((s,f)=>s+(f.default??0),0);
+        ag.totals=players.map(()=>initTotal);
+      }
+      a.activeGame=ag;
       return a;
     });
+    setTmStep(0);
     setScreen("game");
   }
 
@@ -259,20 +258,7 @@ export function GameApp({ gameId, onBack }) {
       const g=a.activeGame;
       if(g.groupId){
         const grp=a.groups.find(x=>x.id===g.groupId);
-        if(grp){
-          if(!grp.pastGames)grp.pastGames=[];
-          const winnerIdx=getWinnerIndex(g.totals,G.winMode);
-          const bestScore=G.winMode==="lowest"?Math.min(...g.totals):Math.max(...g.totals);
-          const winners=g.players.filter((_,i)=>g.totals[i]===bestScore);
-          grp.pastGames.unshift({
-            gameId,
-            date:g.startedAt,rounds:g.tour||g.manche,
-            winner:winners.length>1?winners.join(', '):g.players[winnerIdx],
-            winners,
-            scores:g.players.map((name,i)=>({name,score:g.totals[i]}))
-          });
-          if(grp.pastGames.length>20)grp.pastGames=grp.pastGames.slice(0,20);
-        }
+        if(grp) recordPastGame(grp, gameId, g, G.winMode);
       }
       return a;
     });
