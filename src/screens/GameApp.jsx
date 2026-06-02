@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, getWinnerIndex, recordPastGame } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
 
 function tmGetAllFields(G, exts = {}) {
