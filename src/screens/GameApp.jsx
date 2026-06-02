@@ -671,17 +671,35 @@ export function GameApp({ gameId, onBack }) {
                       borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div {...pressProps("tm"+i+field.key+"m",()=>adjustTMScore(i,field.key,-(field.step||1)))}
-                          style={{width:44,height:44,borderRadius:10,border:"1px solid rgba(196,74,58,.35)",
-                            background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:"1.4rem",
-                            display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
-                        <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,
-                          color:G.accent,minWidth:36,textAlign:"center",lineHeight:1}}>{val}</span>
-                        <div {...pressProps("tm"+i+field.key+"p",()=>adjustTMScore(i,field.key,field.step||1))}
-                          style={{width:44,height:44,borderRadius:10,border:`1px solid ${G.color}55`,
-                            background:`${G.color}22`,color:G.accent,fontSize:"1.4rem",
-                            display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>+</div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        {field.quickSteps
+                          ? <>{field.quickSteps.slice().reverse().map(s=>(
+                              <div key={-s} onClick={()=>adjustTMScore(i,field.key,-s)}
+                                style={{height:44,padding:"0 10px",borderRadius:10,border:"1px solid rgba(196,74,58,.35)",
+                                  background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:".85rem",fontWeight:700,
+                                  display:"flex",alignItems:"center",cursor:"pointer",userSelect:"none"}}>{"−"+s}</div>
+                            ))}
+                            <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,
+                              color:G.accent,minWidth:36,textAlign:"center",lineHeight:1}}>{val}</span>
+                            {field.quickSteps.map(s=>(
+                              <div key={s} onClick={()=>adjustTMScore(i,field.key,s)}
+                                style={{height:44,padding:"0 10px",borderRadius:10,border:"1px solid rgba(74,154,106,.3)",
+                                  background:"rgba(74,154,106,.12)",color:"#6dcc90",fontSize:".85rem",fontWeight:700,
+                                  display:"flex",alignItems:"center",cursor:"pointer",userSelect:"none"}}>{"+"+ s}</div>
+                            ))}</>
+                          : <>
+                              <div {...pressProps("tm"+i+field.key+"m",()=>adjustTMScore(i,field.key,-(field.step||1)))}
+                                style={{width:44,height:44,borderRadius:10,border:"1px solid rgba(196,74,58,.35)",
+                                  background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:"1.4rem",
+                                  display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
+                              <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,
+                                color:G.accent,minWidth:36,textAlign:"center",lineHeight:1}}>{val}</span>
+                              <div {...pressProps("tm"+i+field.key+"p",()=>adjustTMScore(i,field.key,field.step||1))}
+                                style={{width:44,height:44,borderRadius:10,border:`1px solid ${G.color}55`,
+                                  background:`${G.color}22`,color:G.accent,fontSize:"1.4rem",
+                                  display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>+</div>
+                            </>
+                        }
                       </div>
                     </div>
                   </div>
