@@ -198,39 +198,44 @@ export function GameApp({ gameId, onBack }) {
   }
 
   function validerRound(){
-    let didWin=false;
-    update(a=>{
-      const g=a.activeGame;
-      let tourScores;
-      if(gameId==="flip7"){
-        tourScores=computeTourScores(gameId,g.current,g.flip7,[],g.flip7dbl||[]);
-        g.history.push({scores:[...tourScores],flip7:[...g.flip7],flip7dbl:[...(g.flip7dbl||[])]});
-      } else if(gameId==="skyjo"){
-        tourScores=computeTourScores(gameId,g.current,[],g.doubled);
-        g.history.push({scores:[...tourScores],doubled:[...g.doubled]});
-      } else {
-        tourScores=computeTourScores(gameId,g.current);
-        g.history.push([...g.current]);
-      }
-      tourScores.forEach((pts,i)=>{g.totals[i]+=pts;});
+    if(!g) return;
+    // Calcul synchrone depuis data courant, avant l'appel async à update
+    let tourScores;
+    if(gameId==="flip7"){
+      tourScores=computeTourScores(gameId,g.current,g.flip7,[],g.flip7dbl||[]);
+    } else if(gameId==="skyjo"){
+      tourScores=computeTourScores(gameId,g.current,[],g.doubled);
+    } else {
+      tourScores=computeTourScores(gameId,g.current);
+    }
+    const newTotals=g.totals.map((t,i)=>t+tourScores[i]);
+    const won=!G.endOnDemand && isGameOver(newTotals, g.limit);
 
-      const won = G.endOnDemand ? false : isGameOver(g.totals, g.limit);
+    update(a=>{
+      const ag=a.activeGame;
+      if(gameId==="flip7"){
+        ag.history.push({scores:[...tourScores],flip7:[...ag.flip7],flip7dbl:[...(ag.flip7dbl||[])]});
+      } else if(gameId==="skyjo"){
+        ag.history.push({scores:[...tourScores],doubled:[...ag.doubled]});
+      } else {
+        ag.history.push([...ag.current]);
+      }
+      tourScores.forEach((pts,i)=>{ ag.totals[i]+=pts; });
 
       if(won){
-        if(g.groupId){
-          const grp=a.groups.find(x=>x.id===g.groupId);
-          if(grp) recordPastGame(grp, gameId, g, G.winMode);
+        if(ag.groupId){
+          const grp=a.groups.find(x=>x.id===ag.groupId);
+          if(grp) recordPastGame(grp, gameId, ag, G.winMode);
         }
-        didWin=true;
       } else {
-        g.tour=(g.tour||1)+1; g.manche=(g.manche||1)+1;
-        g.current=g.players.map(()=>0);
-        if(gameId==="flip7"){g.flip7=g.players.map(()=>false);g.flip7dbl=g.players.map(()=>false);}
-        if(gameId==="skyjo")g.doubled=g.players.map(()=>false);
+        ag.tour=(ag.tour||1)+1; ag.manche=(ag.manche||1)+1;
+        ag.current=ag.players.map(()=>0);
+        if(gameId==="flip7"){ag.flip7=ag.players.map(()=>false);ag.flip7dbl=ag.players.map(()=>false);}
+        if(gameId==="skyjo")ag.doubled=ag.players.map(()=>false);
       }
       return a;
     });
-    if(didWin) setShowWin(true);
+    if(won) setShowWin(true);
   }
 
   function rejouer(){
