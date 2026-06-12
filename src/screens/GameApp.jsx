@@ -20,6 +20,7 @@ export function GameApp({ gameId, onBack }) {
   const [screen, setScreen] = useState("home");
   const [sheet, setSheet] = useState(null);
   const [showWin, setShowWin] = useState(false);
+  const [winSnapshot, setWinSnapshot] = useState(null);
   const [tmStep, setTmStep] = useState(0);
   const pressTimers = useRef({});
   function pressProps(key, fn) {
@@ -47,8 +48,8 @@ export function GameApp({ gameId, onBack }) {
     try {
       saveGroups(next.groups);
       saveActiveGame(gameId, next.activeGame);
+      setToast(true); setTimeout(()=>setToast(false), 1600);
     } catch(e) { console.error('persist failed', e); }
-    setToast(true); setTimeout(()=>setToast(false), 1600);
   }, [gameId]);
 
   const update = useCallback((fn) => {
@@ -138,7 +139,11 @@ export function GameApp({ gameId, onBack }) {
   }
   function deleteGroup() {
     if(!window.confirm("Supprimer ce groupe ?"))return;
-    update(a=>{a.groups=a.groups.filter(g=>g.id!==editState.id);return a;});
+    update(a=>{
+      a.groups=a.groups.filter(g=>g.id!==editState.id);
+      if(a.activeGame?.groupId===editState.id) a.activeGame=null;
+      return a;
+    });
     setScreen("home");
   }
 
@@ -181,6 +186,7 @@ export function GameApp({ gameId, onBack }) {
   }
   function adjustTMScore(i, key, d) {
     update(a => {
+      a.activeGame.tmScores ||= [];
       const scores=a.activeGame.tmScores[i];
       scores[key]=Math.max(0,(scores[key]||0)+d);
       a.activeGame.totals[i]=computeTMTotal(scores);
@@ -199,7 +205,6 @@ export function GameApp({ gameId, onBack }) {
 
   function validerRound(){
     if(!g) return;
-    // Calcul synchrone depuis data courant, avant l'appel async à update
     let tourScores;
     if(gameId==="flip7"){
       tourScores=computeTourScores(gameId,g.current,g.flip7,[],g.flip7dbl||[]);
@@ -210,6 +215,13 @@ export function GameApp({ gameId, onBack }) {
     }
     const newTotals=g.totals.map((t,i)=>t+tourScores[i]);
     const won=!G.endOnDemand && isGameOver(newTotals, g.limit);
+    const winSnap=won ? (()=>{
+      const best=G.winMode==='lowest'?Math.min(...newTotals):Math.max(...newTotals);
+      return {players:[...g.players],totals:newTotals,
+        winners:g.players.filter((_,i)=>newTotals[i]===best),
+        roundNum:g.tour||g.manche||1,roundLabel:gameId==="flip7"?"Tour":"Manche",
+        groupId:g.groupId,limit:g.limit,tmExtensions:g.tmExtensions};
+    })() : null;
 
     update(a=>{
       const ag=a.activeGame;
@@ -227,6 +239,7 @@ export function GameApp({ gameId, onBack }) {
           const grp=a.groups.find(x=>x.id===ag.groupId);
           if(grp) recordPastGame(grp, gameId, ag, G.winMode);
         }
+        a.activeGame=null;
       } else {
         ag.tour=(ag.tour||1)+1; ag.manche=(ag.manche||1)+1;
         ag.current=ag.players.map(()=>0);
@@ -235,13 +248,14 @@ export function GameApp({ gameId, onBack }) {
       }
       return a;
     });
-    if(won) setShowWin(true);
+    if(won){ setWinSnapshot(winSnap); setShowWin(true); }
   }
 
   function rejouer(){
-    if(!g)return;
-    const{groupId,players,limit,tmExtensions}=g;
+    if(!winSnapshot)return;
+    const{groupId,players,limit,tmExtensions}=winSnapshot;
     setShowWin(false);
+    setWinSnapshot(null);
     update(a=>{
       const ag=makeActiveGame(gameId, groupId, [...players], limit);
       if(G.scoreType==="sheet"){
@@ -259,19 +273,25 @@ export function GameApp({ gameId, onBack }) {
     setScreen("game");
   }
 
-  function goHome(){setShowWin(false);setSheet(null);setScreen("home");}
+  function goHome(){setShowWin(false);setWinSnapshot(null);setSheet(null);setScreen("home");}
 
   function finDePartie(){
     if(!window.confirm("Terminer la partie ?"))return;
+    const best=G.winMode==='lowest'?Math.min(...g.totals):Math.max(...g.totals);
+    const snap={players:[...g.players],totals:[...g.totals],
+      winners:g.players.filter((_,i)=>g.totals[i]===best),
+      roundNum:g.tour||g.manche||1,roundLabel:gameId==="flip7"?"Tour":"Manche",
+      groupId:g.groupId,limit:g.limit,tmExtensions:g.tmExtensions};
     update(a=>{
-      const g=a.activeGame;
-      if(g.groupId){
-        const grp=a.groups.find(x=>x.id===g.groupId);
-        if(grp) recordPastGame(grp, gameId, g, G.winMode);
+      const ag=a.activeGame;
+      if(ag.groupId){
+        const grp=a.groups.find(x=>x.id===ag.groupId);
+        if(grp) recordPastGame(grp, gameId, ag, G.winMode);
       }
       a.activeGame=null;
       return a;
     });
+    setWinSnapshot(snap);
     setShowWin(true);
   }
 
@@ -288,12 +308,14 @@ export function GameApp({ gameId, onBack }) {
   }
 
   function shareResult() {
-    if (!g) return;
-    const ranked = [...g.players.map((name,i)=>({name,score:g.totals[i]}))];
+    if (!winSnapshot) return;
+    const { players, totals, winners, roundNum: wRN, roundLabel: wRL } = winSnapshot;
+    const ranked = [...players.map((name,i)=>({name,score:totals[i]}))];
     ranked.sort((a,b)=>G.winMode==="lowest"?a.score-b.score:b.score-a.score);
-    const text = `${G.emoji} ${G.label} — ${ranked[0].name} gagne !\n`
+    const winTitle = winners.length > 1 ? `${winners.join(' et ')} gagnent !` : `${ranked[0].name} gagne !`;
+    const text = `${G.emoji} ${G.label} — ${winTitle}\n`
       + ranked.map((r,idx)=>`${MEDALS[idx]} ${r.name}: ${r.score}pts`).join("\n")
-      + `\n${roundNum} ${roundLabel.toLowerCase()}${roundNum>1?"s":""}`;
+      + `\n${wRN} ${wRL.toLowerCase()}${wRN>1?"s":""}`;
     if (navigator.share) {
       navigator.share({ title:`${G.label} — Score Keeper`, text });
     } else {
@@ -606,7 +628,7 @@ export function GameApp({ gameId, onBack }) {
                     <div style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",fontWeight:700,lineHeight:1,
                       color:f7dbl?"#f87171":doubled?"#f87171":f7?"#f6c90e":G.accent}}>
                       {gameId==="skyjo"
-                        ? (doubled&&cur>0?`×2 = ${cur*2}`:cur!==0?`${cur>0?"+":""}${cur}`:"-")
+                        ? (doubled&&cur!==0?`×2 = ${cur*2}`:cur!==0?`${cur>0?"+":""}${cur}`:"-")
                         : f7dbl?`×2 = ${tourTotalFinal>0?tourTotalFinal:0}`
                         : tourTotal>0?`+${tourTotal}`:"-"}
                     </div>
@@ -1020,15 +1042,17 @@ export function GameApp({ gameId, onBack }) {
       })()}
 
       {/* ── WIN SCREEN ── */}
-      {showWin && g && (()=>{
-        const ranked=[...g.players.map((name,i)=>({name,score:g.totals[i]}))];
+      {showWin && winSnapshot && (()=>{
+        const { players, totals, winners, roundNum: wRN, roundLabel: wRL } = winSnapshot;
+        const ranked=[...players.map((name,i)=>({name,score:totals[i]}))];
         ranked.sort((a,b)=>G.winMode==="lowest"?a.score-b.score:b.score-a.score);
+        const winTitle=winners.length>1?`${winners.join(' et ')} gagnent !`:`${ranked[0].name} gagne !`;
         return (
           <div style={{position:"fixed",inset:0,background:G.bg,display:"flex",flexDirection:"column",
             alignItems:"center",justifyContent:"center",textAlign:"center",padding:"20px 30px",zIndex:50,overflowY:"auto"}}>
             <div style={{fontSize:"3rem",marginBottom:8}}>🏆</div>
-            <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",color:G.accent,fontWeight:900,marginBottom:4}}>{ranked[0].name} gagne !</div>
-            <div style={{color:G.sub,fontSize:".82rem",marginBottom:18}}>Partie terminée en {roundNum} {roundLabel.toLowerCase()}{roundNum>1?"s":""}</div>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",color:G.accent,fontWeight:900,marginBottom:4}}>{winTitle}</div>
+            <div style={{color:G.sub,fontSize:".82rem",marginBottom:18}}>Partie terminée en {wRN} {wRL.toLowerCase()}{wRN>1?"s":""}</div>
             <div style={{display:"flex",flexDirection:"column",gap:7,width:"100%",maxWidth:300,marginBottom:28}}>
               {ranked.map((r,idx)=>(
                 <div key={idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
@@ -1041,7 +1065,7 @@ export function GameApp({ gameId, onBack }) {
             </div>
             <Btn ghost G={G} style={{padding:"10px 22px",fontSize:".9rem",marginBottom:12}} onClick={shareResult}>📤 Partager les résultats</Btn>
             <div style={{display:"flex",gap:12}}>
-              <Btn ghost G={G} style={{padding:"12px 22px",fontSize:".9rem"}} onClick={()=>{update(a=>{a.activeGame=null;return a;});goHome();}}>🏠 Accueil</Btn>
+              <Btn ghost G={G} style={{padding:"12px 22px",fontSize:".9rem"}} onClick={goHome}>🏠 Accueil</Btn>
               <Btn primary G={G} style={{padding:"12px 22px",fontSize:".9rem"}} onClick={rejouer}>🔄 Rejouer</Btn>
             </div>
           </div>

@@ -11,24 +11,35 @@ export function defaultGroups() {
 }
 
 export function loadGroups() {
-  try { const r = localStorage.getItem(KEY_GROUPS); if (r) return JSON.parse(r); } catch { /* ignore */ }
+  try {
+    const r = localStorage.getItem(KEY_GROUPS);
+    if (r) {
+      const parsed = JSON.parse(r);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch { /* données illisibles -> défauts */ }
   return defaultGroups();
 }
 
+// Laisse remonter l'exception (quota plein, mode privé) : c'est à l'appelant
+// de décider quoi montrer à l'utilisateur.
 export function saveGroups(groups) {
-  try { localStorage.setItem(KEY_GROUPS, JSON.stringify(groups)); } catch { /* ignore */ }
+  localStorage.setItem(KEY_GROUPS, JSON.stringify(groups));
 }
 
 export function loadActiveGame(gameId) {
   try {
     const r = localStorage.getItem(GAMES[gameId].key);
-    if (r) { const d = JSON.parse(r); return d.activeGame || null; }
-  } catch { /* ignore */ }
+    if (r) {
+      const d = JSON.parse(r);
+      if (d && typeof d === 'object' && d.activeGame && typeof d.activeGame === 'object') return d.activeGame;
+    }
+  } catch { /* données illisibles -> pas de partie en cours */ }
   return null;
 }
 
 export function saveActiveGame(gameId, activeGame) {
-  try { localStorage.setItem(GAMES[gameId].key, JSON.stringify({ activeGame })); } catch { /* ignore */ }
+  localStorage.setItem(GAMES[gameId].key, JSON.stringify({ activeGame }));
 }
 
 export function loadData(gameId) {
