@@ -1,7 +1,8 @@
 # 🏛️ Le Conseil — Revue Complète
 
-Tu convoque les **5 experts du conseil Score Keeper** en parallèle via l'outil Agent,
-puis tu synthétises leurs rapports en un plan d'action priorisé.
+Tu convoques les **5 experts du conseil Score Keeper** en parallèle via l'outil Agent,
+puis tu soumets leurs trouvailles au **🔍 Sceptique** pour contre-vérification,
+et enfin tu synthétises les trouvailles confirmées en un plan d'action priorisé.
 
 ## Étape 1 — Lancer les 5 experts en parallèle
 
@@ -33,21 +34,43 @@ Prompt : Lis `src/storage.js`, `src/screens/GameApp.jsx` (sections persist/updat
 Identifie : risques de perte de données, états incohérents, manque de migrations, nettoyage incomplet de activeGame.
 Rapport en moins de 300 mots, risques uniquement.
 
-## Étape 2 — Synthèse
+## Étape 2 — Contre-vérification par le Sceptique
 
-Après avoir reçu les 5 rapports, produis :
+Après avoir reçu les 5 rapports, déduplique les trouvailles (même défaut, même
+endroit → garde une seule entrée), puis lance **un agent Sceptique** avec la
+liste consolidée :
+
+**Agent 6 — 🔍 Le Sceptique (contre-vérification)**
+Prompt : Tu es un avocat du diable. Voici une liste d'affirmations (bugs, risques,
+refactors) produites par d'autres relecteurs sur le projet Score Keeper. Pour CHACUNE :
+ouvre le fichier cité, lis la ligne exacte et la fonction englobante, et rends un verdict :
+- ✅ CONFIRMÉ : tu as reconstruit le scénario d'échec depuis le code réel (cite la chaîne entrée → état → défaut)
+- ⚠️ PLAUSIBLE : pas réfutable mais dépend d'un état runtime réaliste (données legacy, course async)
+- ❌ REJETÉ : avec preuve — la vraie ligne, la garde existante, ou l'invariant qui rend le cas impossible
+- 🤷 CONTESTÉ (refactors) : techniquement vrai mais coût > bénéfice pour cette PWA
+Chaque verdict doit citer du code réel (fichier:ligne). En cas de doute → PLAUSIBLE.
+N'ajoute AUCUNE nouvelle trouvaille.
+[coller ici la liste consolidée des trouvailles des 5 experts]
+
+## Étape 3 — Synthèse
+
+À partir des trouvailles **CONFIRMÉES et PLAUSIBLES uniquement** (les REJETÉES
+sont éliminées, les CONTESTÉES vont dans le backlog avec mention du désaccord), produis :
 
 ### 🚨 Bugs critiques (à corriger immédiatement)
-Liste numérotée, fichier:ligne, description courte.
+Liste numérotée, fichier:ligne, description courte, verdict du Sceptique.
 
 ### ⚠️ Améliorations importantes (à planifier)
 Liste numérotée, effort estimé, impact utilisateur.
 
 ### 💡 Idées futures (backlog)
-Liste courte, sans engagement.
+Liste courte, sans engagement. Inclut les refactors CONTESTÉS avec l'argument du Sceptique.
 
 ### 📋 Plan d'action recommandé
 Ordre de priorité avec rationale. Maximum 10 items.
+
+### 🗑️ Rejetés
+Une ligne par trouvaille rejetée avec la preuve du Sceptique — pour la traçabilité.
 
 ---
 

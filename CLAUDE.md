@@ -85,17 +85,18 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 
 ## Commandes de conseil (`/project:*`)
 
-Le projet dispose d'un **conseil de 5 experts** disponibles comme commandes Claude Code.
-Chaque expert analyse le code depuis un angle spécialisé.
+Le projet dispose d'un **conseil de 6 experts** disponibles comme commandes Claude Code.
+Cinq experts trouvent (chacun depuis un angle spécialisé), le sixième réfute.
 
 | Commande | Expert | Rôle |
 |----------|--------|------|
-| `/project:council` | Conseil complet | Lance les 5 experts en parallèle + synthèse |
+| `/project:council` | Conseil complet | 5 experts en parallèle → contre-vérif Sceptique → synthèse |
 | `/project:arbitre` | 🎲 L'Arbitre | Vérifie la logique métier vs règles officielles des jeux |
 | `/project:qa` | 🧪 Le QA | Chasse les cas limites, trous dans les tests |
 | `/project:ergonome` | 📱 L'Ergonome | UX mobile, tactile, accessibilité, PWA |
 | `/project:architecte` | ⚛️ L'Architecte | Patterns React, perf, maintenabilité |
 | `/project:gardien` | 💾 Le Gardien | Persistance, migrations, cohérence des données |
+| `/project:sceptique` | 🔍 Le Sceptique | Contre-vérifie les trouvailles des autres, réfute les faux positifs |
 
 ---
 
