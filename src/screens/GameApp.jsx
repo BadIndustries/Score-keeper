@@ -1,18 +1,8 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
-
-function tmGetAllFields(G, exts = {}) {
-  return [
-    ...(G.scoreFields || []),
-    ...(G.extensions || []).filter(e => e.scoreField && exts[e.key]).map(e => e.scoreField),
-  ];
-}
-function computeTMTotal(scores) {
-  return Object.values(scores || {}).reduce((s, v) => s + (v || 0), 0);
-}
 
 export function GameApp({ gameId, onBack }) {
   const G = GAMES[gameId];
@@ -81,6 +71,13 @@ export function GameApp({ gameId, onBack }) {
     return grp.limits?.[gameId] ?? G.defaultLimit;
   }
 
+  function initTMGame(ag, exts, players) {
+    const fields = tmGetAllFields(G, exts);
+    ag.tmScores = players.map(() => Object.fromEntries(fields.map(f => [f.key, f.default ?? 0])));
+    ag.tmExtensions = exts;
+    ag.totals = ag.tmScores.map(s => computeTMTotal(s, fields));
+  }
+
   function startGroupGame(groupId) {
     if (data.activeGame) {
       if (data.activeGame.groupId===groupId) {
@@ -93,14 +90,7 @@ export function GameApp({ gameId, onBack }) {
     const limit = getGroupLimit(grp);
     update(a => {
       const ag=makeActiveGame(gameId, groupId, [...grp.players], limit);
-      if(G.scoreType==="sheet"){
-        const exts=grp.tmExtensions||{};
-        const fields=tmGetAllFields(G,exts);
-        ag.tmScores=grp.players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
-        ag.tmExtensions=exts;
-        const initTotalGrp=fields.reduce((s,f)=>s+(f.default??0),0);
-        ag.totals=grp.players.map(()=>initTotalGrp);
-      }
+      if(G.scoreType==="sheet") initTMGame(ag, grp.tmExtensions||{}, grp.players);
       a.activeGame=ag;
       return a;
     });
@@ -159,14 +149,7 @@ export function GameApp({ gameId, onBack }) {
     if(players.length<MIN_PLAYERS){alert(`Il faut au moins ${MIN_PLAYERS} joueurs !`);return;}
     update(a=>{
       const ag=makeActiveGame(gameId, null, players, quickState.limit);
-      if(G.scoreType==="sheet"){
-        const exts=quickState.tmExtensions||{};
-        const fields=tmGetAllFields(G,exts);
-        ag.tmScores=players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
-        ag.tmExtensions=exts;
-        const initTotalQuick=fields.reduce((s,f)=>s+(f.default??0),0);
-        ag.totals=players.map(()=>initTotalQuick);
-      }
+      if(G.scoreType==="sheet") initTMGame(ag, quickState.tmExtensions||{}, players);
       a.activeGame=ag;
       return a;
     });
@@ -189,7 +172,8 @@ export function GameApp({ gameId, onBack }) {
       a.activeGame.tmScores ||= [];
       const scores=a.activeGame.tmScores[i];
       scores[key]=Math.max(0,(scores[key]||0)+d);
-      a.activeGame.totals[i]=computeTMTotal(scores);
+      const fields=tmGetAllFields(G, a.activeGame.tmExtensions||{});
+      a.activeGame.totals[i]=computeTMTotal(scores, fields);
       return a;
     });
   }
@@ -258,14 +242,7 @@ export function GameApp({ gameId, onBack }) {
     setWinSnapshot(null);
     update(a=>{
       const ag=makeActiveGame(gameId, groupId, [...players], limit);
-      if(G.scoreType==="sheet"){
-        const exts=tmExtensions||{};
-        const fields=tmGetAllFields(G,exts);
-        ag.tmScores=players.map(()=>Object.fromEntries(fields.map(f=>[f.key,f.default??0])));
-        ag.tmExtensions=exts;
-        const initTotal=fields.reduce((s,f)=>s+(f.default??0),0);
-        ag.totals=players.map(()=>initTotal);
-      }
+      if(G.scoreType==="sheet") initTMGame(ag, tmExtensions||{}, players);
       a.activeGame=ag;
       return a;
     });
@@ -277,11 +254,13 @@ export function GameApp({ gameId, onBack }) {
 
   function finDePartie(){
     if(!window.confirm("Terminer la partie ?"))return;
-    const best=G.winMode==='lowest'?Math.min(...g.totals):Math.max(...g.totals);
-    const snap={players:[...g.players],totals:[...g.totals],
-      winners:g.players.filter((_,i)=>g.totals[i]===best),
+    const tmFields=G.scoreType==="sheet"?tmGetAllFields(G,g.tmExtensions||{}):null;
+    const totals=tmFields&&g.tmScores?g.tmScores.map(s=>computeTMTotal(s,tmFields)):[...g.totals];
+    const best=G.winMode==='lowest'?Math.min(...totals):Math.max(...totals);
+    const snap={players:[...g.players],totals,
+      winners:g.players.filter((_,i)=>totals[i]===best),
       roundNum:g.tour||g.manche||1,roundLabel:gameId==="flip7"?"Tour":"Manche",
-      groupId:g.groupId,limit:g.limit,tmExtensions:g.tmExtensions};
+      groupId:g.groupId,limit:g.limit,tmExtensions:g.tmExtensions||{}};
     update(a=>{
       const ag=a.activeGame;
       if(ag.groupId){
@@ -672,9 +651,10 @@ export function GameApp({ gameId, onBack }) {
                 {field.hint && <div style={{fontSize:".72rem",color:G.sub,marginTop:3}}>{field.hint}</div>}
               </div>
               <div style={{display:"flex",gap:4,marginBottom:4}}>
-                {fields.map((_,idx)=>(
-                  <div key={idx} style={{height:4,flex:1,borderRadius:2,transition:"background .3s",
-                    background:idx<tmStep?G.color:idx===tmStep?G.accent:G.border}}/>
+                {fields.map((f,idx)=>(
+                  <div key={idx} onClick={()=>setTmStep(idx)} title={f.label}
+                    style={{height:8,flex:1,borderRadius:2,transition:"background .3s",cursor:"pointer",
+                      background:idx<tmStep?G.color:idx===tmStep?G.accent:G.border}}/>
                 ))}
               </div>
             </div>
@@ -778,7 +758,7 @@ export function GameApp({ gameId, onBack }) {
                     <div style={{display:"flex",flexWrap:"wrap",gap:"3px 10px",marginTop:5}}>
                       {fields.map(f=>{
                         const v=(g.tmScores?.[i]||{})[f.key]??0;
-                        return v>0?(
+                        return v!==0?(
                           <span key={f.key} style={{fontSize:".7rem",color:G.sub}}>
                             {f.emoji} {f.label} <strong style={{color:G.text}}>{v}</strong>
                           </span>
@@ -792,6 +772,7 @@ export function GameApp({ gameId, onBack }) {
               <div style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:14,overflow:"hidden"}}>
                 <div style={{padding:"8px 14px",borderBottom:`1px solid ${G.border}`,
                   fontSize:".68rem",letterSpacing:".1em",textTransform:"uppercase",color:G.sub}}>Détail</div>
+                <div style={{overflowX:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:".78rem"}}>
                   <thead>
                     <tr style={{borderBottom:`1px solid ${G.border}`}}>
@@ -825,10 +806,11 @@ export function GameApp({ gameId, onBack }) {
                     </tr>
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
             <div style={S.footer}>
-              <Btn ghost G={G} onClick={()=>setTmStep(fields.length-1)}>← Corriger</Btn>
+              <Btn ghost G={G} onClick={()=>setTmStep(0)}>← Corriger</Btn>
               <Btn primary G={G} style={{flex:1}} onClick={finDePartie}>🏁 Terminer</Btn>
             </div>
           </>

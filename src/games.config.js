@@ -152,8 +152,8 @@ export const GAMES = {
     endOnDemand: true,
     scoreType: "sheet",
     scoreFields: [
-      { key: "tr",         label: "NT",          emoji: "🌡️", default: 20 },
-      { key: "milestones", label: "Objectif",     emoji: "🎯", default: 0, quickSteps: [2, 5] },
+      { key: "tr",         label: "NT",          emoji: "🌡️", default: 14 },
+      { key: "milestones", label: "Objectif",     emoji: "🎯", default: 0, quickSteps: [5] },
       { key: "awards",     label: "Récompense",   emoji: "🏆", default: 0, quickSteps: [2, 5] },
       { key: "greeneries", label: "Forêts",       emoji: "🌲", default: 0 },
       { key: "cities",     label: "Villes",       emoji: "🏙️", default: 0 },

@@ -57,3 +57,17 @@ export function recordPastGame(grp, gameId, ag, winMode) {
   if (grp.pastGames.length > 20) grp.pastGames = grp.pastGames.slice(0, 20);
   return grp;
 }
+
+export function tmGetAllFields(G, exts = {}) {
+  return [
+    ...(G.scoreFields || []),
+    ...(G.extensions || []).filter(e => e.scoreField && exts[e.key]).map(e => e.scoreField),
+  ];
+}
+
+// Avec fields : ne somme que les champs actifs (évite les scores fantômes d'extensions désactivées).
+// Sans fields : somme toutes les clés (rétrocompatibilité).
+export function computeTMTotal(scores, fields) {
+  if (fields) return fields.reduce((s, f) => s + ((scores?.[f.key]) || 0), 0);
+  return Object.values(scores || {}).reduce((s, v) => s + (v || 0), 0);
+}

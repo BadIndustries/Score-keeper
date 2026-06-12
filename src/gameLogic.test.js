@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal } from './gameLogic.js'
 
 describe('computeTourScores', () => {
   describe('Odin / Roi des Nains / Skyjo (sans double)', () => {
@@ -206,5 +206,92 @@ describe('recordPastGame', () => {
     const grp = { pastGames: [] }
     const result = recordPastGame(grp, 'odin', makeAg(['Alice'], [5]), 'lowest')
     expect(result).toBe(grp)
+  })
+})
+
+const G_TM = {
+  scoreFields: [
+    { key: 'tr',         label: 'NT',       default: 14 },
+    { key: 'milestones', label: 'Objectif', default: 0  },
+    { key: 'cards',      label: 'Cartes',   default: 0  },
+  ],
+  extensions: [
+    { key: 'venusNext', label: 'Venus Next', scoreField: { key: 'venus',   label: 'Vénus',    default: 0 } },
+    { key: 'colonies',  label: 'Colonies',   scoreField: { key: 'colonies', label: 'Colonies', default: 0 } },
+    { key: 'prelude',   label: 'Prelude',    scoreField: null },
+  ],
+}
+
+describe('tmGetAllFields', () => {
+  it('sans extensions actives, retourne uniquement les scoreFields de base', () => {
+    const fields = tmGetAllFields(G_TM, {})
+    expect(fields.map(f => f.key)).toEqual(['tr', 'milestones', 'cards'])
+  })
+
+  it('avec venusNext actif, ajoute le champ venus', () => {
+    const fields = tmGetAllFields(G_TM, { venusNext: true })
+    expect(fields.map(f => f.key)).toEqual(['tr', 'milestones', 'cards', 'venus'])
+  })
+
+  it('prelude actif (scoreField null) n ajoute aucun champ de score', () => {
+    const fields = tmGetAllFields(G_TM, { prelude: true })
+    expect(fields.map(f => f.key)).toEqual(['tr', 'milestones', 'cards'])
+  })
+
+  it('plusieurs extensions actives sont toutes incluses', () => {
+    const fields = tmGetAllFields(G_TM, { venusNext: true, colonies: true })
+    expect(fields.map(f => f.key)).toEqual(['tr', 'milestones', 'cards', 'venus', 'colonies'])
+  })
+
+  it('extension desactivee (false) n est pas incluse', () => {
+    const fields = tmGetAllFields(G_TM, { venusNext: false, colonies: true })
+    expect(fields.map(f => f.key)).not.toContain('venus')
+    expect(fields.map(f => f.key)).toContain('colonies')
+  })
+
+  it('exts omis utilise {} par defaut (pas de crash)', () => {
+    const fields = tmGetAllFields(G_TM)
+    expect(fields.map(f => f.key)).toEqual(['tr', 'milestones', 'cards'])
+  })
+})
+
+describe('computeTMTotal', () => {
+  it('somme tous les champs (sans filtre)', () => {
+    expect(computeTMTotal({ tr: 14, milestones: 10, cards: 5 })).toBe(29)
+  })
+
+  it('retourne 0 pour undefined (donnees legacy sans tmScores)', () => {
+    expect(computeTMTotal(undefined)).toBe(0)
+  })
+
+  it('retourne 0 pour un objet vide', () => {
+    expect(computeTMTotal({})).toBe(0)
+  })
+
+  it('avec fields : ne somme que les champs actifs (filtre les cles orphelines)', () => {
+    const fields = [{ key: 'tr' }, { key: 'milestones' }]
+    // venus est orphelin (extension desactivee) — ne doit pas etre compte
+    const scores = { tr: 14, milestones: 5, venus: 8 }
+    expect(computeTMTotal(scores, fields)).toBe(19)
+  })
+
+  it('avec fields : valeurs manquantes traitees comme 0', () => {
+    const fields = [{ key: 'tr' }, { key: 'cards' }]
+    expect(computeTMTotal({ tr: 20 }, fields)).toBe(20)
+  })
+
+  it('avec fields : scores undefined traite comme 0', () => {
+    const fields = [{ key: 'tr' }]
+    expect(computeTMTotal(undefined, fields)).toBe(0)
+  })
+
+  it('score fantome : sans fields, inclut la cle orpheline', () => {
+    const scores = { tr: 14, venus: 8 }
+    expect(computeTMTotal(scores)).toBe(22)
+  })
+
+  it('score fantome : avec fields, exclut la cle orpheline', () => {
+    const fields = [{ key: 'tr' }]
+    expect(computeTMTotal({ tr: 14, venus: 8 }, fields)).toBe(14)
   })
 })

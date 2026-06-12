@@ -22,10 +22,10 @@ describe('GAMES -- Terraforming Mars', () => {
     expect(getField('awards').emoji).toBe('🏆')
   })
 
-  it('milestones a quickSteps [2, 5]', () => {
-    expect(getField('milestones').quickSteps).toEqual([2, 5])
+  it('milestones a quickSteps [5] (pas de +2 impossible selon les regles)', () => {
+    expect(getField('milestones').quickSteps).toEqual([5])
   })
-  it('awards a quickSteps [2, 5]', () => {
+  it('awards a quickSteps [2, 5] (5 pts 1er, 2 pts 2e)', () => {
     expect(getField('awards').quickSteps).toEqual([2, 5])
   })
 
@@ -35,13 +35,13 @@ describe('GAMES -- Terraforming Mars', () => {
     }
   })
 
-  it('le total initial (somme des defaults) est 20 (TR seul vaut 20)', () => {
+  it('le total initial (somme des defaults) est 14 (NT de depart selon les regles)', () => {
     const initTotal = fields.reduce((s, f) => s + (f.default ?? 0), 0)
-    expect(initTotal).toBe(20)
+    expect(initTotal).toBe(14)
   })
 
-  it('TR a le default 20', () => {
-    expect(getField('tr').default).toBe(20)
+  it('TR a le default 14 (NT de depart officiel)', () => {
+    expect(getField('tr').default).toBe(14)
   })
 
   it('milestones et awards ont le default 0', () => {
