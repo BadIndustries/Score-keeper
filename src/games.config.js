@@ -4,6 +4,7 @@ export const KEY_SKYJO  = "skyjo-v1";
 export const KEY_RDN    = "rdn-v1";
 export const KEY_QWIRKLE = "qwirkle-v1";
 export const KEY_TM     = "tm-v1";
+export const KEY_HARMONIES = "harmonies-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -166,6 +167,38 @@ export const GAMES = {
       { key: "turmoil",   label: "Turmoil",    scoreField: null },
     ],
   },
+  harmonies: {
+    key: KEY_HARMONIES,
+    label: "Harmonies",
+    emoji: "\u{1F33F}",
+    color: "#0d9488",
+    colorDim: "rgba(13,148,136,.14)",
+    border: "#0f2e2e",
+    surface: "#0a1f1f",
+    surface2: "#112828",
+    bg: "#061515",
+    text: "#e6f5f4",
+    sub: "#5a8a88",
+    accent: "#2dd4bf",
+    btnBg: "#0d9488",
+    btnColor: "#061515",
+    desc: "Le plus de points gagne\nScoresheet en fin de partie",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "sheet",
+    scoreFields: [
+      { key: "trees",     label: "Arbres",    emoji: "🌳", default: 0, quickSteps: [1, 3, 5], hint: "H1=1pt · H2=3pts · H3=5pts" },
+      { key: "mountains", label: "Montagnes", emoji: "⛰️", default: 0, quickSteps: [1, 3, 7], hint: "H1=1pt · H2=3pts · H3=7pts si adjacente à 2 montagnes" },
+      { key: "river",     label: "Rivière",   emoji: "🌊", default: 0,                         hint: "Longueur 1–6 : 1–6pts · Ensuite +4 par jeton supplémentaire" },
+      { key: "fields",    label: "Champs",    emoji: "🌾", default: 0, quickSteps: [5],        hint: "5pts par groupe de 2+ jetons jaunes contigus" },
+      { key: "buildings", label: "Bâtiments", emoji: "🏘️", default: 0, quickSteps: [5],        hint: "5pts par bâtiment entouré de 3+ couleurs différentes" },
+      { key: "animals",   label: "Animaux",   emoji: "🦊", default: 0,                         hint: "Total des points de vos cartes Animaux" },
+    ],
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999 };

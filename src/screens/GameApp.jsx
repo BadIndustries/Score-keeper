@@ -100,7 +100,6 @@ export function GameApp({ gameId, onBack }) {
 
   function openEditGroup(id) {
     const grp = id ? data.groups.find(x=>x.id===id) : null;
-    const tmG = GAMES.terraforming;
     setEditState({
       id,
       name: grp?.name||"",
@@ -108,7 +107,7 @@ export function GameApp({ gameId, onBack }) {
       limits: grp?.limits ? {...grp.limits} : {...DEFAULT_LIMITS},
       tmExtensions: grp?.tmExtensions
         ? {...grp.tmExtensions}
-        : Object.fromEntries((tmG.extensions||[]).map(e=>[e.key,false])),
+        : Object.fromEntries((G.extensions||[]).map(e=>[e.key,false])),
     });
     setScreen("editGroup");
   }
@@ -403,21 +402,21 @@ export function GameApp({ gameId, onBack }) {
           ))}
           {editState.players.length<6 && <Btn ghost full G={G} onClick={()=>setEditState(s=>({...s,players:[...s.players,""]}))}>＋ Ajouter un joueur</Btn>}
 
-          {(() => { const tmG=GAMES.terraforming; return tmG.extensions && (tmG.extensions.length || 0) > 0 && <>
-            <div style={{...S.sLabel,marginTop:10}}>Extensions Terraforming Mars</div>
-            {tmG.extensions.map(ext=>(
+          {G.extensions && G.extensions.length > 0 && <>
+            <div style={{...S.sLabel,marginTop:10}}>Extensions</div>
+            {G.extensions.map(ext=>(
               <div key={ext.key} onClick={()=>setEditState(s=>({...s,tmExtensions:{...s.tmExtensions,[ext.key]:!s.tmExtensions?.[ext.key]}}))}
                 style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:G.surface,
                   border:`1px solid ${G.border}`,borderRadius:10,padding:"11px 14px",marginBottom:6,cursor:"pointer"}}>
                 <span style={{fontSize:".9rem",color:G.text}}>{ext.label}{ext.scoreField && <span style={{fontSize:".72rem",color:G.sub,marginLeft:6}}>+VP</span>}</span>
-                <div style={{width:24,height:24,borderRadius:6,border:"2px solid " + (editState.tmExtensions?.[ext.key] ? "#b5451b" : G.border),
-                  background:editState.tmExtensions?.[ext.key]?"rgba(181,69,27,.14)":"transparent",
-                  display:"flex",alignItems:"center",justifyContent:"center",color:"#f5a623",fontSize:".9rem",transition:"all .15s"}}>
+                <div style={{width:24,height:24,borderRadius:6,border:"2px solid " + (editState.tmExtensions?.[ext.key] ? G.color : G.border),
+                  background:editState.tmExtensions?.[ext.key]?G.colorDim:"transparent",
+                  display:"flex",alignItems:"center",justifyContent:"center",color:G.accent,fontSize:".9rem",transition:"all .15s"}}>
                   {editState.tmExtensions?.[ext.key]?"✓":""}
                 </div>
               </div>
             ))}
-          </>; })()}
+          </>}
         </div>
         <div style={S.footer}>
           <Btn ghost G={G} onClick={()=>setScreen("home")}>← Retour</Btn>
