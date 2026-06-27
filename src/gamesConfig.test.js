@@ -73,6 +73,79 @@ describe('GAMES -- winMode correct pour chaque jeu', () => {
   it('qwirkle: highest', () => { expect(GAMES.qwirkle.winMode).toBe('highest') })
   it('terraforming: highest', () => { expect(GAMES.terraforming.winMode).toBe('highest') })
   it('harmonies: highest', () => { expect(GAMES.harmonies.winMode).toBe('highest') })
+  it('barbu: highest (scores negatifs, le moins negatif gagne)', () => { expect(GAMES.barbu.winMode).toBe('highest') })
+})
+
+describe('GAMES -- Barbu', () => {
+  const B = GAMES.barbu
+  const contracts = B.contracts
+
+  function getContract(key) {
+    return contracts.find(c => c.key === key)
+  }
+
+  it('barbu est defini dans GAMES', () => {
+    expect(B).toBeDefined()
+  })
+  it('scoreType est contracts', () => {
+    expect(B.scoreType).toBe('contracts')
+  })
+  it('endOnDemand est true (pas de limite de points)', () => {
+    expect(B.endOnDemand).toBe(true)
+  })
+  it('winMode est highest', () => {
+    expect(B.winMode).toBe('highest')
+  })
+  it('contient les 7 contrats classiques', () => {
+    expect(contracts.map(c => c.key)).toEqual(['plis', 'coeurs', 'dames', 'barbu', 'derniers', 'salade', 'reussite'])
+  })
+  it('chaque contrat a un hint et au moins un composant', () => {
+    for (const c of contracts) {
+      expect(typeof c.hint).toBe('string')
+      expect(c.components.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('pas de plis : −5 par pli', () => {
+    expect(getContract('plis').components[0].per).toBe(-5)
+  })
+  it('pas de cœurs : −10 par cœur', () => {
+    expect(getContract('coeurs').components[0].per).toBe(-10)
+  })
+  it('pas de dames : −20 par dame, max 4', () => {
+    const comp = getContract('dames').components[0]
+    expect(comp.per).toBe(-20)
+    expect(comp.max).toBe(4)
+  })
+  it('Barbu (Roi de cœur) : −50, max 1', () => {
+    const comp = getContract('barbu').components[0]
+    expect(comp.per).toBe(-50)
+    expect(comp.max).toBe(1)
+  })
+  it('deux derniers plis : −25, max 2', () => {
+    const comp = getContract('derniers').components[0]
+    expect(comp.per).toBe(-25)
+    expect(comp.max).toBe(2)
+  })
+
+  it('salade combine les 5 contrats negatifs', () => {
+    const salade = getContract('salade')
+    expect(salade.components.map(c => c.key)).toEqual(['plis', 'coeurs', 'dames', 'barbu', 'derniers'])
+  })
+  it('salade reprend les memes valeurs de points que les contrats simples', () => {
+    const byKey = Object.fromEntries(getContract('salade').components.map(c => [c.key, c.per]))
+    expect(byKey).toEqual({ plis: -5, coeurs: -10, dames: -20, barbu: -50, derniers: -25 })
+  })
+
+  it('reussite est le seul contrat positif (saisie libre, sans per)', () => {
+    const r = getContract('reussite')
+    expect(r.positive).toBe(true)
+    expect(r.components[0].per).toBeUndefined()
+  })
+
+  it('DEFAULT_LIMITS contient barbu', () => {
+    expect(DEFAULT_LIMITS.barbu).toBe(999)
+  })
 })
 
 describe('GAMES -- Harmonies', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores } from './gameLogic.js'
 
 describe('computeTourScores', () => {
   describe('Odin / Roi des Nains / Skyjo (sans double)', () => {
@@ -293,5 +293,56 @@ describe('computeTMTotal', () => {
   it('score fantome : avec fields, exclut la cle orpheline', () => {
     const fields = [{ key: 'tr' }]
     expect(computeTMTotal({ tr: 14, venus: 8 }, fields)).toBe(14)
+  })
+})
+
+describe('computeContractScores (Le Barbu)', () => {
+  const plis = { key: 'plis', components: [{ key: 'plis', per: -5, max: 13 }] }
+  const barbu = { key: 'barbu', components: [{ key: 'barbu', per: -50, max: 1 }] }
+  const reussite = { key: 'reussite', components: [{ key: 'reussite', step: 5 }] }
+  const salade = {
+    key: 'salade',
+    components: [
+      { key: 'plis', per: -5 },
+      { key: 'coeurs', per: -10 },
+      { key: 'dames', per: -20 },
+      { key: 'barbu', per: -50 },
+      { key: 'derniers', per: -25 },
+    ],
+  }
+
+  it('contrat simple : compte × per (pas de plis = −5 par pli)', () => {
+    expect(computeContractScores(plis, { plis: [3, 0, 5, 1] }, 4)).toEqual([-15, 0, -25, -5])
+  })
+
+  it('Barbu : −50 au joueur qui prend le Roi de cœur', () => {
+    expect(computeContractScores(barbu, { barbu: [0, 1, 0, 0] }, 4)).toEqual([0, -50, 0, 0])
+  })
+
+  it('réussite : sans per, le compte EST le nombre de points (positif)', () => {
+    expect(computeContractScores(reussite, { reussite: [20, 5, 0] }, 3)).toEqual([20, 5, 0])
+  })
+
+  it('salade : somme de tous les composants par joueur', () => {
+    const counts = {
+      plis: [2, 1, 0, 0],      // -10, -5, 0, 0
+      coeurs: [1, 0, 3, 0],    // -10, 0, -30, 0
+      dames: [0, 1, 0, 1],     // 0, -20, 0, -20
+      barbu: [0, 0, 1, 0],     // 0, 0, -50, 0
+      derniers: [1, 0, 0, 1],  // -25, 0, 0, -25
+    }
+    expect(computeContractScores(salade, counts, 4)).toEqual([-45, -25, -80, -45])
+  })
+
+  it('compteurs manquants traités comme 0', () => {
+    expect(computeContractScores(plis, {}, 3)).toEqual([0, 0, 0])
+  })
+
+  it('contrat sans composants → 0 pour chaque joueur', () => {
+    expect(computeContractScores({ key: 'x' }, {}, 2)).toEqual([0, 0])
+  })
+
+  it('contract null ne crash pas', () => {
+    expect(computeContractScores(null, {}, 2)).toEqual([0, 0])
   })
 })

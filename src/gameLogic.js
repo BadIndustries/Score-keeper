@@ -71,3 +71,16 @@ export function computeTMTotal(scores, fields) {
   if (fields) return fields.reduce((s, f) => s + ((scores?.[f.key]) || 0), 0);
   return Object.values(scores || {}).reduce((s, v) => s + (v || 0), 0);
 }
+
+// Le Barbu — calcule les points d'un contrat pour chaque joueur.
+// counts : { [componentKey]: number[] } (un compteur par joueur).
+// comp.per défini → points = compte × per (ex : −5 par pli).
+// comp.per absent → le compte EST le nombre de points (ex : réussite, saisie libre).
+export function computeContractScores(contract, counts, playerCount) {
+  return Array.from({ length: playerCount }, (_, i) =>
+    (contract?.components || []).reduce((sum, comp) => {
+      const c = counts?.[comp.key]?.[i] || 0;
+      return sum + (comp.per != null ? c * comp.per : c);
+    }, 0)
+  );
+}

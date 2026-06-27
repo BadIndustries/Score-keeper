@@ -5,6 +5,7 @@ export const KEY_RDN    = "rdn-v1";
 export const KEY_QWIRKLE = "qwirkle-v1";
 export const KEY_TM     = "tm-v1";
 export const KEY_HARMONIES = "harmonies-v1";
+export const KEY_BARBU  = "barbu-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -199,6 +200,52 @@ export const GAMES = {
       { key: "animals",   label: "Animaux",   emoji: "🦊", default: 0,                         hint: "Total des points de vos cartes Animaux" },
     ],
   },
+  barbu: {
+    key: KEY_BARBU,
+    label: "Barbu",
+    emoji: "\u{1F0BE}",
+    color: "#c0392b",
+    colorDim: "rgba(192,57,43,.14)",
+    border: "#3d1820",
+    surface: "#240d11",
+    surface2: "#311116",
+    bg: "#16080a",
+    text: "#f7e4e6",
+    sub: "#a06b70",
+    accent: "#e74c3c",
+    btnBg: "#c0392b",
+    btnColor: "#f7e4e6",
+    desc: "Le moins de points gagne\nJeu à contrats",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "contracts",
+    contracts: [
+      { key: "plis", label: "Pas de plis", emoji: "🃏", hint: "−5 par pli ramassé",
+        components: [{ key: "plis", label: "Plis ramassés", emoji: "🃏", per: -5, max: 13 }] },
+      { key: "coeurs", label: "Pas de cœurs", emoji: "❤️", hint: "−10 par cœur ramassé",
+        components: [{ key: "coeurs", label: "Cœurs ramassés", emoji: "❤️", per: -10, max: 13 }] },
+      { key: "dames", label: "Pas de dames", emoji: "👸", hint: "−20 par dame ramassée",
+        components: [{ key: "dames", label: "Dames ramassées", emoji: "👸", per: -20, max: 4 }] },
+      { key: "barbu", label: "Roi de cœur (le Barbu)", emoji: "🤴", hint: "−50 pour qui ramasse le Roi de cœur",
+        components: [{ key: "barbu", label: "A pris le Barbu", emoji: "🤴", per: -50, max: 1 }] },
+      { key: "derniers", label: "Deux derniers plis", emoji: "🔚", hint: "−25 par dernier pli (les 2 derniers)",
+        components: [{ key: "derniers", label: "Derniers plis pris", emoji: "🔚", per: -25, max: 2 }] },
+      { key: "salade", label: "Salade", emoji: "🥗", hint: "Tous les contrats négatifs cumulés",
+        components: [
+          { key: "plis", label: "Plis", emoji: "🃏", per: -5, max: 13 },
+          { key: "coeurs", label: "Cœurs", emoji: "❤️", per: -10, max: 13 },
+          { key: "dames", label: "Dames", emoji: "👸", per: -20, max: 4 },
+          { key: "barbu", label: "Barbu", emoji: "🤴", per: -50, max: 1 },
+          { key: "derniers", label: "2 derniers", emoji: "🔚", per: -25, max: 2 },
+        ] },
+      { key: "reussite", label: "Réussite", emoji: "🏁", positive: true, hint: "Contrat positif — saisis les points de chacun",
+        components: [{ key: "reussite", label: "Points de réussite", emoji: "🏁", step: 5 }] },
+    ],
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999 };

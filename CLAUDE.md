@@ -9,7 +9,7 @@
 
 PWA mobile-first de comptage de points pour jeux de société. React 19 + Vite 8 + vitest. Déployée sur GitHub Pages (`badindustries/score-keeper`, branche `main`).
 
-**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies
+**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies · Barbu
 
 ---
 
@@ -54,6 +54,14 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 - L'activeGame doit avoir `tmScores[]` et `tmExtensions{}` initialisés
 - Toujours utiliser `tmGetAllFields(G, exts)` pour la liste des champs actifs
 - `computeTMTotal(scores)` pour recalculer le total d'un joueur
+
+### Jeu à contrats (Barbu)
+- `G.scoreType === "contracts"` + `G.endOnDemand === true` + `winMode: "highest"` (scores ≤ 0, le moins négatif gagne)
+- `G.contracts[]` : chaque contrat a `components[]` ; un composant = `{ key, label, emoji, per?, max?, step? }`
+- `per` défini → points = compte × per (ex : −5 par pli) ; `per` absent → le compte EST le nombre de points (réussite, saisie libre)
+- `computeContractScores(contract, counts, playerCount)` : fonction pure, somme tous les composants par joueur
+- Salade = un contrat à 5 composants (plis/cœurs/dames/barbu/derniers), parcouru en wizard comme les étapes TM
+- L'écran utilise un `contractDraft` local `{ key, step, counts }` ; à la validation : push dans `history` `{contract, scores}`, cumul dans `totals`, `tour/manche = history.length`
 
 ### Gestion de victoire
 - `isGameOver(totals, limit)` : `Math.max(...totals) >= limit` — déclenche quand
