@@ -84,3 +84,10 @@ export function computeContractScores(contract, counts, playerCount) {
     }, 0)
   );
 }
+
+// Le Barbu — réussite : récompense par rang d'arrivée (+step par joueur battu).
+// Index 0 = 1er (gagne le plus), dernier index = 0 point.
+// Ex : reussiteRankRewards(4, 15) → [45, 30, 15, 0].
+export function reussiteRankRewards(playerCount, step) {
+  return Array.from({ length: playerCount }, (_, r) => (playerCount - 1 - r) * step);
+}

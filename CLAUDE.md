@@ -58,8 +58,9 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 ### Jeu à contrats (Barbu)
 - `G.scoreType === "contracts"` + `G.endOnDemand === true` + `winMode: "highest"` (scores ≤ 0, le moins négatif gagne)
 - `G.contracts[]` : chaque contrat a `components[]` ; un composant = `{ key, label, emoji, per?, max?, step? }`
-- `per` défini → points = compte × per (ex : −5 par pli) ; `per` absent → le compte EST le nombre de points (réussite, saisie libre)
+- `per` défini → points = compte × per (ex : −5 par pli) ; `per` absent → le compte EST le nombre de points
 - `computeContractScores(contract, counts, playerCount)` : fonction pure, somme tous les composants par joueur
+- Réussite = `mode: "rank"` + `rankStep` : sélecteur de classement, +rankStep par joueur battu (`reussiteRankRewards(n, step)` → ex `[45,30,15,0]`)
 - Salade = un contrat à 5 composants (plis/cœurs/dames/barbu/derniers), parcouru en wizard comme les étapes TM
 - L'écran utilise un `contractDraft` local `{ key, step, counts }` ; à la validation : push dans `history` `{contract, scores}`, cumul dans `totals`, `tour/manche = history.length`
 

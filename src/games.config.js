@@ -242,8 +242,9 @@ export const GAMES = {
           { key: "barbu", label: "Barbu", emoji: "🤴", per: -50, max: 1 },
           { key: "derniers", label: "2 derniers", emoji: "🔚", per: -25, max: 2 },
         ] },
-      { key: "reussite", label: "Réussite", emoji: "🏁", positive: true, hint: "Contrat positif — saisis les points de chacun",
-        components: [{ key: "reussite", label: "Points de réussite", emoji: "🏁", step: 5 }] },
+      { key: "reussite", label: "Réussite", emoji: "🏁", positive: true, mode: "rank", rankStep: 15,
+        hint: "Classement à l'arrivée — +15 par joueur battu",
+        components: [{ key: "reussite", label: "Classement à l'arrivée", emoji: "🏁" }] },
     ],
   },
 };

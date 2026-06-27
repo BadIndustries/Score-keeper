@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards } from './gameLogic.js'
 
 describe('computeTourScores', () => {
   describe('Odin / Roi des Nains / Skyjo (sans double)', () => {
@@ -344,5 +344,24 @@ describe('computeContractScores (Le Barbu)', () => {
 
   it('contract null ne crash pas', () => {
     expect(computeContractScores(null, {}, 2)).toEqual([0, 0])
+  })
+})
+
+describe('reussiteRankRewards (Le Barbu)', () => {
+  it('4 joueurs, pas de 15 : [45, 30, 15, 0]', () => {
+    expect(reussiteRankRewards(4, 15)).toEqual([45, 30, 15, 0])
+  })
+  it('3 joueurs, pas de 15 : [30, 15, 0]', () => {
+    expect(reussiteRankRewards(3, 15)).toEqual([30, 15, 0])
+  })
+  it('le dernier rang vaut toujours 0', () => {
+    const r = reussiteRankRewards(5, 10)
+    expect(r[r.length - 1]).toBe(0)
+  })
+  it('le 1er vaut (nbJoueurs − 1) × pas', () => {
+    expect(reussiteRankRewards(6, 15)[0]).toBe(75)
+  })
+  it('pas de 10 : [20, 10, 0] pour 3 joueurs', () => {
+    expect(reussiteRankRewards(3, 10)).toEqual([20, 10, 0])
   })
 })

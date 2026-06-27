@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
 
 export function GameApp({ gameId, onBack }) {
@@ -192,6 +192,13 @@ export function GameApp({ gameId, onBack }) {
     setContractDraft(dr=>{
       const arr=[...dr.counts[compKey]];
       arr[i]=Math.max(0, Math.min(max ?? 99, arr[i]+d));
+      return {...dr, counts:{...dr.counts, [compKey]:arr}};
+    });
+  }
+  function setContractValue(compKey, i, v){
+    setContractDraft(dr=>{
+      const arr=[...dr.counts[compKey]];
+      arr[i]=v;
       return {...dr, counts:{...dr.counts, [compKey]:arr}};
     });
   }
@@ -935,7 +942,8 @@ export function GameApp({ gameId, onBack }) {
                 <div style={{fontSize:"1.6rem",lineHeight:1}}>{comp.emoji}</div>
                 <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.1rem",fontWeight:700,color:G.accent,marginTop:4}}>{comp.label}</div>
                 <div style={{fontSize:".72rem",color:G.sub,marginTop:3}}>
-                  {comp.per!=null?`${comp.per} point${Math.abs(comp.per)>1?"s":""} par unité`:"Saisis directement les points"}
+                  {contract.mode==="rank"?`Désigne la place de chaque joueur (+${contract.rankStep} par joueur battu)`
+                    :comp.per!=null?`${comp.per} point${Math.abs(comp.per)>1?"s":""} par unité`:"Saisis directement les points"}
                 </div>
               </div>
               {comps.length>1 && <div style={{display:"flex",gap:4,marginBottom:4}}>
@@ -948,7 +956,38 @@ export function GameApp({ gameId, onBack }) {
             </div>
 
             <div style={{display:"flex",flexDirection:"column",gap:8,flex:1,padding:"4px 12px",overflowY:"auto"}}>
-              {g.players.map((name,i)=>{
+              {contract.mode==="rank" && (()=>{
+                const rewards=reussiteRankRewards(g.players.length, contract.rankStep);
+                return g.players.map((name,i)=>{
+                  const val=contractDraft.counts[comp.key][i];
+                  return (
+                    <div key={i} style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:14,
+                      padding:"10px 14px 10px 16px",position:"relative",flexShrink:0}}>
+                      <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                        <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
+                        <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:900,color:val>0?"#6dcc90":G.sub,lineHeight:1}}>{val>0?`+${val}`:"0"}</span>
+                      </div>
+                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                        {rewards.map((pts,r)=>{
+                          const sel=val===pts;
+                          return (
+                            <div key={r} onClick={()=>setContractValue(comp.key,i,pts)}
+                              style={{flex:"1 1 auto",minWidth:54,height:42,borderRadius:10,cursor:"pointer",userSelect:"none",
+                                border:`1px solid ${sel?G.color:G.border}`,background:sel?G.colorDim:G.surface2,
+                                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                              <span style={{fontSize:".72rem",fontWeight:700,color:sel?G.accent:G.text}}>{r+1}{r===0?"er":"e"}</span>
+                              <span style={{fontSize:".58rem",color:sel?G.accent:G.sub}}>{pts>0?`+${pts}`:"0"}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+
+              {contract.mode!=="rank" && g.players.map((name,i)=>{
                 const val=contractDraft.counts[comp.key][i];
                 const countStep=comp.per!=null?1:(comp.step||1);
                 const stepPts=comp.per!=null?Math.abs(comp.per):(comp.step||1);

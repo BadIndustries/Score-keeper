@@ -137,10 +137,19 @@ describe('GAMES -- Barbu', () => {
     expect(byKey).toEqual({ plis: -5, coeurs: -10, dames: -20, barbu: -50, derniers: -25 })
   })
 
-  it('reussite est le seul contrat positif (saisie libre, sans per)', () => {
+  it('reussite est le seul contrat positif', () => {
     const r = getContract('reussite')
     expect(r.positive).toBe(true)
     expect(r.components[0].per).toBeUndefined()
+  })
+  it('reussite utilise le mode classement (+15 par joueur battu)', () => {
+    const r = getContract('reussite')
+    expect(r.mode).toBe('rank')
+    expect(r.rankStep).toBe(15)
+  })
+  it('reussite est le seul contrat en mode rank', () => {
+    const rankContracts = contracts.filter(c => c.mode === 'rank')
+    expect(rankContracts.map(c => c.key)).toEqual(['reussite'])
   })
 
   it('DEFAULT_LIMITS contient barbu', () => {
