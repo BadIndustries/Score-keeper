@@ -867,6 +867,7 @@ export function GameApp({ gameId, onBack }) {
                   textAlign:"center",fontSize:".58rem",letterSpacing:".12em",textTransform:"uppercase",color:G.sub}}>
                   Contrats<strong style={{color:G.accent,fontSize:".95rem",display:"block",lineHeight:1.1,letterSpacing:0}}>{g.history.length}</strong>
                 </div>
+                <div style={S.iconBtn} onClick={()=>setSheet("rules")}>📖</div>
                 <div style={S.iconBtn} onClick={()=>setSheet("history")}>📜</div>
               </div>
             </div>
@@ -1086,6 +1087,69 @@ export function GameApp({ gameId, onBack }) {
                     </tbody>
                   </table>
               }
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SHEET: RULES (Barbu) ── */}
+      {sheet==="rules" && g && G.scoreType==="contracts" && (
+        <div onClick={e=>{if(e.target===e.currentTarget)setSheet(null);}}
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",
+          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:10}}>
+          <div style={{background:G.surface,borderRadius:"20px 20px 0 0",border:`1px solid ${G.border}`,
+            width:"100%",maxHeight:"86%",display:"flex",flexDirection:"column"}}>
+            <div style={{width:36,height:4,background:G.border,borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+              padding:"0 16px 10px",flexShrink:0,borderBottom:`1px solid ${G.border}`}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:G.accent}}>📖 Règles — {G.label}</span>
+              <div style={S.iconBtn} onClick={()=>setSheet(null)}>✕</div>
+            </div>
+            <div style={{overflowY:"auto",flex:1,padding:"12px 16px 24px"}}>
+              <div style={{fontSize:".8rem",color:G.text,lineHeight:1.5,marginBottom:14}}>
+                Jeu à contrats. <strong style={{color:G.accent}}>Le moins de points gagne</strong> (les scores sont négatifs,
+                le moins négatif l'emporte). À chaque manche, le donneur choisit un contrat ; pour chacun,
+                on saisit ce que chaque joueur a ramassé et l'app calcule les points.
+              </div>
+
+              <div style={{fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:G.sub,marginBottom:8}}>Les contrats</div>
+              {G.contracts.map(c=>{
+                const reussite=c.mode==="rank";
+                const rewards=reussite?reussiteRankRewards(g.players.length, c.rankStep):null;
+                return (
+                  <div key={c.key} style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:12,
+                    padding:"10px 12px",marginBottom:7}}>
+                    <div style={{display:"flex",alignItems:"center",gap:9}}>
+                      <span style={{fontSize:"1.3rem",flexShrink:0}}>{c.emoji}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontFamily:"'Cinzel',serif",fontSize:".9rem",fontWeight:700,color:c.positive?"#6dcc90":G.text}}>{c.label}</div>
+                        <div style={{fontSize:".68rem",color:G.sub,marginTop:1}}>{c.hint}</div>
+                      </div>
+                    </div>
+                    {c.key==="salade" && (
+                      <div style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`,
+                        display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
+                        {c.components.map(comp=>(
+                          <span key={comp.key}>{comp.emoji} {comp.label} <strong style={{color:"#ff8070"}}>{comp.per}</strong></span>
+                        ))}
+                      </div>
+                    )}
+                    {reussite && (
+                      <div style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`,
+                        display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
+                        {rewards.map((pts,r)=>(
+                          <span key={r}>{r+1}{r===0?"er":"e"} <strong style={{color:"#6dcc90"}}>{pts>0?`+${pts}`:"0"}</strong></span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              <div style={{fontSize:".66rem",color:G.sub,lineHeight:1.5,marginTop:12,fontStyle:"italic"}}>
+                Valeurs standard françaises. La réussite ({G.label}) suit l'ordre d'arrivée :
+                +{G.contracts.find(c=>c.mode==="rank")?.rankStep} points par joueur battu.
+              </div>
             </div>
           </div>
         </div>
