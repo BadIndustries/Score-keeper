@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "generate": "node scripts/gen-3d-dice.cjs && node scripts/gen-icon-variants.cjs && node -e \"const fs=require('fs');fs.copyFileSync('public/icon-preview-3d-192.png','public/pwa-192.png');fs.copyFileSync('public/icon-preview-3d-512.png','public/pwa-512.png');fs.copyFileSync('public/icon-preview-3d-maskable-512.png','public/pwa-maskable-512.png');console.log('PWA icons -> 3D dice ✓');\"",
+    "generate": "node scripts/gen-3d-dice.cjs && node scripts/gen-icon-variants.cjs && node -e \"const fs=require('fs');fs.copyFileSync('public/icon-preview-3d-192.png','public/pwa-192.png');fs.copyFileSync('public/icon-preview-3d-512.png','public/pwa-512.png');fs.copyFileSync('public/icon-preview-3d-maskable-512.png','public/pwa-maskable-512.png');console.log('PWA icons -> 3D dice ✓');\" && node scripts/gen-changelog.cjs",
     "dev": "npm run generate && vite",
     "build": "npm run generate && vite build",
     "test": "vitest run --reporter=verbose --reporter=github-actions",

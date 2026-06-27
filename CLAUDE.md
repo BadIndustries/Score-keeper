@@ -28,7 +28,7 @@ src/
     WhoStartsApp.jsx   — mini-app "doigts sur l'écran" pour désigner qui commence
   ui.jsx               — composants partagés (Btn, LimitCtrl, PlayerEditRow, GIcon)
   GameIcons.jsx        — icônes SVG inline
-  changelog.js         — journal des versions (affiché dans À propos → Nouveautés)
+  changelog.js         — GÉNÉRÉ (scripts/gen-changelog.cjs) — journal des versions (À propos → Nouveautés)
   UpdatePrompt.jsx     — popup auto « nouvelle version » (vite-plugin-pwa, mode prompt)
 ```
 
@@ -120,3 +120,11 @@ GitHub Actions (`.github/workflows/deploy.yml`) :
 4. **deploy** — GitHub Pages (sur push main uniquement)
 
 Push via : `git push -u origin main-fix:main`
+
+### Journal des versions (changelog)
+- `src/changelog.js` est **généré** par `scripts/gen-changelog.cjs` (lancé dans `npm run generate`, donc avant `dev`/`build`).
+- Pour ajouter une entrée visible par l'utilisateur, mettre un trailer dans le message de commit :
+  `Changelog: Description simple et orientée joueur`
+  (plusieurs lignes `Changelog:` possibles par commit ; regroupées par date).
+- Le socle curé (historique avant l'automatisation) vit dans le `SEED` du script.
+- Le job `build` du workflow utilise `fetch-depth: 0` pour que `git log` voie tout l'historique.
