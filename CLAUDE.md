@@ -28,6 +28,8 @@ src/
     WhoStartsApp.jsx   — mini-app "doigts sur l'écran" pour désigner qui commence
   ui.jsx               — composants partagés (Btn, LimitCtrl, PlayerEditRow, GIcon)
   GameIcons.jsx        — icônes SVG inline
+  changelog.js         — journal des versions (affiché dans À propos → Nouveautés)
+  UpdatePrompt.jsx     — popup auto « nouvelle version » (vite-plugin-pwa, mode prompt)
 ```
 
 ### Flux de données

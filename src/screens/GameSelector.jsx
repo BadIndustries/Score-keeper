@@ -2,11 +2,13 @@ import { useState } from "react";
 import { GAMES, MEDALS, KEY_GROUPS } from '../games.config.js';
 import { saveGroups, loadGroups } from '../storage.js';
 import { GIcon, MIN_PLAYERS } from '../ui.jsx';
+import { CHANGELOG } from '../changelog.js';
 
 // ── SELECTOR SCREEN ───────────────────────────────────────────────────
 export function GameSelector({ onSelect }) {
   const [showHistory,  setShowHistory]  = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
   const [importMsg,    setImportMsg]    = useState(null);
   const [updateMsg,    setUpdateMsg]    = useState(null);
   const [updating,     setUpdating]     = useState(false);
@@ -223,6 +225,18 @@ export function GameSelector({ onSelect }) {
                 <span style={{fontSize:"1.1rem",color:"rgba(255,255,255,.3)"}}>↗</span>
               </a>
 
+              {/* Nouveautés / journal des versions */}
+              <div onClick={()=>setShowChangelog(true)}
+                style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
+                borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                <span style={{fontSize:"1.6rem"}}>🆕</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:".9rem",marginBottom:3}}>Nouveautés</div>
+                  <div style={{fontSize:".72rem",color:"rgba(255,255,255,.4)"}}>Les dernières améliorations et nouveaux jeux</div>
+                </div>
+                <span style={{fontSize:"1.1rem",color:"rgba(255,255,255,.3)"}}>›</span>
+              </div>
+
               {/* Export */}
               <div onClick={exportGroups}
                 style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
@@ -253,6 +267,41 @@ export function GameSelector({ onSelect }) {
                   {importMsg}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CHANGELOG OVERLAY ── */}
+      {showChangelog && (
+        <div onClick={e=>{if(e.target===e.currentTarget)setShowChangelog(false);}}
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
+          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:60}}>
+          <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
+            width:"100%",maxHeight:"86%",display:"flex",flexDirection:"column"}}>
+            <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+              padding:"0 16px 12px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>🆕 Nouveautés</span>
+              <div onClick={()=>setShowChangelog(false)}
+                style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
+                borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+            </div>
+            <div style={{overflowY:"auto",flex:1,padding:"14px 18px 32px"}}>
+              {CHANGELOG.map((rel,ri)=>(
+                <div key={ri} style={{marginBottom:18}}>
+                  <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:8}}>
+                    <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700,color:"#fff"}}>{rel.version}</span>
+                    {rel.date && <span style={{fontSize:".62rem",color:"rgba(255,255,255,.3)",letterSpacing:".06em"}}>{rel.date}</span>}
+                  </div>
+                  {rel.items.map((it,ii)=>(
+                    <div key={ii} style={{display:"flex",gap:8,marginBottom:6}}>
+                      <span style={{color:"#5eb8ff",flexShrink:0,lineHeight:1.5}}>•</span>
+                      <span style={{fontSize:".8rem",color:"rgba(255,255,255,.7)",lineHeight:1.5}}>{it}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </div>
