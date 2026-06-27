@@ -950,27 +950,32 @@ export function GameApp({ gameId, onBack }) {
             <div style={{display:"flex",flexDirection:"column",gap:8,flex:1,padding:"4px 12px",overflowY:"auto"}}>
               {g.players.map((name,i)=>{
                 const val=contractDraft.counts[comp.key][i];
-                const step=comp.step||1;
+                const countStep=comp.per!=null?1:(comp.step||1);
+                const stepPts=comp.per!=null?Math.abs(comp.per):(comp.step||1);
+                const positive=comp.per!=null?comp.per>0:true;
                 const pts=comp.per!=null?val*comp.per:val;
+                const downD=positive?-countStep:countStep;
+                const upD=positive?countStep:-countStep;
                 return (
                   <div key={i} style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:14,
                     padding:"10px 14px 10px 16px",position:"relative",flexShrink:0}}>
                     <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                      <div style={{display:"flex",flexDirection:"column"}}>
+                      <div style={{display:"flex",flexDirection:"column",minWidth:0}}>
                         <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
-                        {pts!==0 && <span style={{fontSize:".66rem",color:pts<0?"#ff8070":"#6dcc90",marginTop:1}}>{pts>0?`+${pts}`:pts} pts</span>}
+                        {comp.per!=null && val>0 && <span style={{fontSize:".6rem",color:G.sub,marginTop:1}}>{val} × {Math.abs(comp.per)}</span>}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <div {...pressProps("bc"+i+comp.key+"m",()=>adjustContractCount(comp.key,i,-step,comp.max))}
-                          style={{width:44,height:44,borderRadius:10,border:"1px solid rgba(196,74,58,.35)",
-                            background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:"1.4rem",
-                            display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>−</div>
-                        <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,color:G.accent,minWidth:36,textAlign:"center",lineHeight:1}}>{val}</span>
-                        <div {...pressProps("bc"+i+comp.key+"p",()=>adjustContractCount(comp.key,i,step,comp.max))}
-                          style={{width:44,height:44,borderRadius:10,border:`1px solid ${G.color}55`,
-                            background:`${G.color}22`,color:G.accent,fontSize:"1.4rem",
-                            display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>+</div>
+                        <div {...pressProps("bc"+i+comp.key+"m",()=>adjustContractCount(comp.key,i,downD,comp.max))}
+                          style={{height:44,padding:"0 12px",minWidth:48,borderRadius:10,border:"1px solid rgba(196,74,58,.35)",
+                            background:"rgba(196,74,58,.15)",color:"#ff8070",fontSize:"1rem",fontWeight:700,
+                            display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>{"−"+stepPts}</div>
+                        <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",fontWeight:900,minWidth:48,textAlign:"center",lineHeight:1,
+                          color:pts<0?"#ff8070":pts>0?"#6dcc90":G.sub}}>{pts}</span>
+                        <div {...pressProps("bc"+i+comp.key+"p",()=>adjustContractCount(comp.key,i,upD,comp.max))}
+                          style={{height:44,padding:"0 12px",minWidth:48,borderRadius:10,border:"1px solid rgba(74,154,106,.3)",
+                            background:"rgba(74,154,106,.12)",color:"#6dcc90",fontSize:"1rem",fontWeight:700,
+                            display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",userSelect:"none"}}>{"+"+stepPts}</div>
                       </div>
                     </div>
                   </div>
