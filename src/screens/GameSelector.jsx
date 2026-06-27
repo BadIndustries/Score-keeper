@@ -118,7 +118,7 @@ export function GameSelector({ onSelect }) {
           borderRadius:28,padding:"11px 20px",fontSize:".75rem",color:"rgba(255,255,255,.65)",
           cursor:"pointer",display:"flex",alignItems:"center",gap:7,letterSpacing:".05em",
           boxShadow:"0 4px 24px rgba(0,0,0,.45)",backdropFilter:"blur(8px)"}}>
-          ⚙️ Données
+          ℹ️ À propos
         </div>
         <div onClick={()=>setShowHistory(true)} style={{pointerEvents:"auto",
           background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.14)",
@@ -178,7 +178,7 @@ export function GameSelector({ onSelect }) {
             <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px"}}/>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
               padding:"0 16px 12px",borderBottom:"1px solid rgba(255,255,255,.07)"}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>⚙️ Données & sauvegarde</span>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>ℹ️ À propos</span>
               <div style={{fontSize:".62rem",color:"rgba(255,255,255,.2)",letterSpacing:".08em"}}>
                 Version {__APP_VERSION__} — {__BUILD_DATE__}
               </div>
@@ -209,6 +209,19 @@ export function GameSelector({ onSelect }) {
                   {updateMsg}
                 </div>
               )}
+
+              {/* GitHub */}
+              <a href="https://github.com/BadIndustries/Score-keeper" target="_blank" rel="noopener noreferrer"
+                style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
+                borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,
+                textDecoration:"none",color:"inherit"}}>
+                <span style={{fontSize:"1.6rem"}}>💻</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:".9rem",marginBottom:3}}>Code source sur GitHub</div>
+                  <div style={{fontSize:".72rem",color:"rgba(255,255,255,.4)"}}>BadIndustries/Score-keeper — voir le projet et son code</div>
+                </div>
+                <span style={{fontSize:"1.1rem",color:"rgba(255,255,255,.3)"}}>↗</span>
+              </a>
 
               {/* Export */}
               <div onClick={exportGroups}
