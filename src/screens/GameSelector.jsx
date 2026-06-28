@@ -10,6 +10,7 @@ export function GameSelector({ onSelect }) {
   const [showHistory,  setShowHistory]  = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [showInstall, setShowInstall] = useState(false);
   const [importMsg,    setImportMsg]    = useState(null);
   const [updateMsg,    setUpdateMsg]    = useState(null);
   const [updating,     setUpdating]     = useState(false);
@@ -238,6 +239,18 @@ export function GameSelector({ onSelect }) {
                 <span style={{fontSize:"1.1rem",color:"rgba(255,255,255,.3)"}}>›</span>
               </div>
 
+              {/* Astuce : installer sur l'écran d'accueil */}
+              <div onClick={()=>setShowInstall(true)}
+                style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
+                borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                <span style={{fontSize:"1.6rem"}}>💡</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:".9rem",marginBottom:3}}>Astuce</div>
+                  <div style={{fontSize:".72rem",color:"rgba(255,255,255,.4)"}}>Installer l’app en icône sur ton téléphone</div>
+                </div>
+                <span style={{fontSize:"1.1rem",color:"rgba(255,255,255,.3)"}}>›</span>
+              </div>
+
               {/* Export */}
               <div onClick={exportGroups}
                 style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
@@ -268,6 +281,63 @@ export function GameSelector({ onSelect }) {
                   {importMsg}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── INSTALL TIP OVERLAY ── */}
+      {showInstall && (
+        <div onClick={e=>{if(e.target===e.currentTarget)setShowInstall(false);}}
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
+          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:60}}>
+          <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
+            width:"100%",maxHeight:"88%",display:"flex",flexDirection:"column"}}>
+            <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+              padding:"0 16px 12px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>💡 Installer l’app</span>
+              <div onClick={()=>setShowInstall(false)}
+                style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
+                borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+            </div>
+            <div style={{overflowY:"auto",flex:1,padding:"14px 18px 32px"}}>
+              <div style={{fontSize:".8rem",color:"rgba(255,255,255,.6)",lineHeight:1.5,marginBottom:18}}>
+                Ajoute Score Keeper à ton écran d’accueil pour l’ouvrir comme une vraie application,
+                en plein écran et même hors connexion.
+              </div>
+
+              {[
+                { os:"🍏 iPhone / iPad (Safari)", steps:[
+                  "Ouvre l’app dans Safari (pas dans une autre application).",
+                  "Touche le bouton Partager (le carré avec une flèche vers le haut), en bas de l’écran.",
+                  "Fais défiler puis touche « Sur l’écran d’accueil ».",
+                  "Touche « Ajouter » en haut à droite. L’icône apparaît sur ton écran d’accueil !",
+                ]},
+                { os:"🤖 Android (Chrome)", steps:[
+                  "Ouvre l’app dans Chrome.",
+                  "Touche le menu ⋮ (trois points), en haut à droite.",
+                  "Touche « Ajouter à l’écran d’accueil » (ou « Installer l’application »).",
+                  "Confirme avec « Ajouter ». L’icône apparaît sur ton écran d’accueil !",
+                ]},
+              ].map((block,bi)=>(
+                <div key={bi} style={{marginBottom:18}}>
+                  <div style={{fontFamily:"'Cinzel',serif",fontSize:".9rem",fontWeight:700,color:"#fff",marginBottom:10}}>{block.os}</div>
+                  {block.steps.map((step,si)=>(
+                    <div key={si} style={{display:"flex",gap:10,marginBottom:8,alignItems:"flex-start"}}>
+                      <span style={{flexShrink:0,width:22,height:22,borderRadius:"50%",background:"rgba(94,184,255,.18)",
+                        border:"1px solid rgba(94,184,255,.4)",color:"#5eb8ff",fontSize:".7rem",fontWeight:700,
+                        display:"flex",alignItems:"center",justifyContent:"center"}}>{si+1}</span>
+                      <span style={{fontSize:".8rem",color:"rgba(255,255,255,.7)",lineHeight:1.5,flex:1}}>{step}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              <div style={{fontSize:".7rem",color:"rgba(255,255,255,.35)",lineHeight:1.5,fontStyle:"italic"}}>
+                Astuce : si tu ne vois pas l’option, vérifie que tu es bien dans Safari (iPhone) ou Chrome (Android),
+                et pas dans le navigateur intégré d’une autre app.
+              </div>
             </div>
           </div>
         </div>
