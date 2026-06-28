@@ -2,6 +2,7 @@ import { useState } from "react";
 import { GAMES, MEDALS, KEY_GROUPS } from '../games.config.js';
 import { saveGroups, loadGroups } from '../storage.js';
 import { GIcon, MIN_PLAYERS } from '../ui.jsx';
+import { medalRank } from '../gameLogic.js';
 import { CHANGELOG } from '../changelog.js';
 
 // ── SELECTOR SCREEN ───────────────────────────────────────────────────
@@ -330,6 +331,7 @@ export function GameSelector({ onSelect }) {
                       const pgGame = GAMES[pg.gameId];
                       const ds = new Date(pg.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
                       const sorted = [...pg.scores].sort((a,b)=> pgGame?.winMode==="lowest" ? a.score-b.score : b.score-a.score);
+                      const pgTotals = pg.scores.map(x=>x.score);
                       return (
                         <div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.05)",display:"flex",alignItems:"flex-start",gap:10}}>
                           <div style={{fontSize:"1.3rem",flexShrink:0,marginTop:2}}>{pgGame?.emoji||"🎮"}</div>
@@ -339,7 +341,7 @@ export function GameSelector({ onSelect }) {
                               <span style={{fontSize:".62rem",color:"rgba(255,255,255,.25)",background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 6px"}}>{pg.groupName}</span>
                             </div>
                             <div style={{fontSize:".63rem",color:"rgba(255,255,255,.35)",lineHeight:1.6}}>
-                              {sorted.map((s,j)=>`${MEDALS[j]} ${s.name} ${s.score}pts`).join(" · ")}
+                              {sorted.map((s)=>`${MEDALS[medalRank(s.score, pgTotals, pgGame?.winMode)]} ${s.name} ${s.score}pts`).join(" · ")}
                             </div>
                           </div>
                           <div style={{flexShrink:0,textAlign:"right"}}>

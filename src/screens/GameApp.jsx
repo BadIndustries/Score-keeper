@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
 
 export function GameApp({ gameId, onBack }) {
@@ -218,8 +218,7 @@ export function GameApp({ gameId, onBack }) {
 
   function getRankIcon(idx){
     if(!g) return "";
-    const sorted=[...g.totals].sort((a,b)=>G.winMode==="lowest"?a-b:b-a);
-    return["🥇","🥈","🥉","","",""][sorted.indexOf(g.totals[idx])]||"";
+    return["🥇","🥈","🥉","","",""][medalRank(g.totals[idx], g.totals, G.winMode)]||"";
   }
 
   function validerRound(){
@@ -328,7 +327,7 @@ export function GameApp({ gameId, onBack }) {
     ranked.sort((a,b)=>G.winMode==="lowest"?a.score-b.score:b.score-a.score);
     const winTitle = winners.length > 1 ? `${winners.join(' et ')} gagnent !` : `${ranked[0].name} gagne !`;
     const text = `${G.emoji} ${G.label} — ${winTitle}\n`
-      + ranked.map((r,idx)=>`${MEDALS[idx]} ${r.name}: ${r.score}pts`).join("\n")
+      + ranked.map((r)=>`${MEDALS[medalRank(r.score, totals, G.winMode)]} ${r.name}: ${r.score}pts`).join("\n")
       + `\n${wRN} ${wRL.toLowerCase()}${wRN>1?"s":""}`;
     if (navigator.share) {
       navigator.share({ title:`${G.label} — Score Keeper`, text });
@@ -778,17 +777,17 @@ export function GameApp({ gameId, onBack }) {
             </div>
             <div style={{flex:1,overflowY:"auto",padding:"8px 12px"}}>
               <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
-                {ranked.map(({name,i,total},rank)=>(
-                  <div key={i} style={{background:G.surface,border:`1px solid ${rank===0?G.color:G.border}`,
+                {ranked.map(({name,i,total})=>{const mr=medalRank(total,g.totals,G.winMode);return (
+                  <div key={i} style={{background:G.surface,border:`1px solid ${mr===0?G.color:G.border}`,
                     borderRadius:14,padding:"10px 14px 10px 16px",position:"relative",
-                    boxShadow:rank===0?`0 0 14px ${G.colorDim}`:undefined}}>
+                    boxShadow:mr===0?`0 0 14px ${G.colorDim}`:undefined}}>
                     <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,
                       borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
                     <div style={{display:"flex",alignItems:"center"}}>
-                      <span style={{fontSize:"1.3rem",marginRight:8}}>{"🥇🥈🥉"[rank]||""}</span>
+                      <span style={{fontSize:"1.3rem",marginRight:8}}>{["🥇","🥈","🥉"][mr]||""}</span>
                       <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700,flex:1}}>{name}</span>
                       <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.7rem",fontWeight:900,
-                        color:rank===0?G.accent:G.text,lineHeight:1}}>{total}</span>
+                        color:mr===0?G.accent:G.text,lineHeight:1}}>{total}</span>
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:"3px 10px",marginTop:5}}>
                       {fields.map(f=>{
@@ -801,7 +800,7 @@ export function GameApp({ gameId, onBack }) {
                       })}
                     </div>
                   </div>
-                ))}
+                );})}
               </div>
 
               <div style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:14,overflow:"hidden"}}>
@@ -1177,7 +1176,8 @@ export function GameApp({ gameId, onBack }) {
                       const pgGame = GAMES[pg.gameId] || G;
                       const ds=new Date(pg.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
                       const sorted=[...pg.scores].sort((a,b)=>pgGame.winMode==="lowest"?a.score-b.score:b.score-a.score);
-                      const sc=sorted.map((s,i)=>`${MEDALS[i]} ${s.name} ${s.score}pts`).join(" · ");
+                      const pgTotals=pg.scores.map(x=>x.score);
+                      const sc=sorted.map((s)=>`${MEDALS[medalRank(s.score, pgTotals, pgGame.winMode)]} ${s.name} ${s.score}pts`).join(" · ");
                       return (
                         <div key={pi} style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",
                           padding:"8px 0",borderBottom:`1px solid ${G.surface2}`,gap:8}}>
@@ -1329,8 +1329,8 @@ export function GameApp({ gameId, onBack }) {
               {ranked.map((r,idx)=>(
                 <div key={idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
                   background:G.surface,borderRadius:10,padding:"10px 16px",
-                  border:`1px solid ${idx===0?G.color:G.border}`}}>
-                  <span style={{fontFamily:"'Cinzel',serif",fontSize:".9rem"}}>{MEDALS[idx]} {r.name}</span>
+                  border:`1px solid ${medalRank(r.score, totals, G.winMode)===0?G.color:G.border}`}}>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:".9rem"}}>{MEDALS[medalRank(r.score, totals, G.winMode)]} {r.name}</span>
                   <span style={{fontFamily:"'Cinzel',serif",fontWeight:700,color:G.accent}}>{r.score} pts</span>
                 </div>
               ))}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank } from './gameLogic.js'
 
 describe('computeTourScores', () => {
   describe('Odin / Roi des Nains / Skyjo (sans double)', () => {
@@ -363,5 +363,51 @@ describe('reussiteRankRewards (Le Barbu)', () => {
   })
   it('pas de 10 : [20, 10, 0] pour 3 joueurs', () => {
     expect(reussiteRankRewards(3, 10)).toEqual([20, 10, 0])
+  })
+})
+
+describe('medalRank (ex aequo = meme medaille)', () => {
+  it('lowest : le plus petit score est 1er (rang 0)', () => {
+    const totals = [12, 5, 18]
+    expect(medalRank(5, totals, 'lowest')).toBe(0)
+    expect(medalRank(12, totals, 'lowest')).toBe(1)
+    expect(medalRank(18, totals, 'lowest')).toBe(2)
+  })
+
+  it('highest : le plus grand score est 1er (rang 0)', () => {
+    const totals = [12, 5, 18]
+    expect(medalRank(18, totals, 'highest')).toBe(0)
+    expect(medalRank(12, totals, 'highest')).toBe(1)
+    expect(medalRank(5, totals, 'highest')).toBe(2)
+  })
+
+  it('egalite 1er-2e (Odin/lowest) : les deux ont le rang 0 (or)', () => {
+    const totals = [5, 5, 10]
+    expect(medalRank(5, totals, 'lowest')).toBe(0)
+    expect(medalRank(5, totals, 'lowest')).toBe(0)
+    // le suivant saute au rang 2 (bronze), pas argent
+    expect(medalRank(10, totals, 'lowest')).toBe(2)
+  })
+
+  it('egalite 1er-2e (highest) : les deux ont le rang 0', () => {
+    const totals = [20, 20, 8]
+    expect(medalRank(20, totals, 'highest')).toBe(0)
+    expect(medalRank(8, totals, 'highest')).toBe(2)
+  })
+
+  it('triple egalite : tous au rang 0', () => {
+    const totals = [7, 7, 7]
+    for (const t of totals) expect(medalRank(t, totals, 'lowest')).toBe(0)
+  })
+
+  it('egalite en 2e-3e : rang 1 partage, personne au rang 2 reel', () => {
+    const totals = [3, 8, 8]
+    expect(medalRank(3, totals, 'lowest')).toBe(0)
+    expect(medalRank(8, totals, 'lowest')).toBe(1)
+  })
+
+  it('totals vide ou absent ne crash pas', () => {
+    expect(medalRank(5, [], 'lowest')).toBe(0)
+    expect(medalRank(5, undefined, 'lowest')).toBe(0)
   })
 })

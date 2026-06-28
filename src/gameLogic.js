@@ -91,3 +91,9 @@ export function computeContractScores(contract, counts, playerCount) {
 export function reussiteRankRewards(playerCount, step) {
   return Array.from({ length: playerCount }, (_, r) => (playerCount - 1 - r) * step);
 }
+
+// Rang « compétition » (1224) : les ex æquo partagent le même rang.
+// Retourne l'index de médaille (0 = 1er) = nombre de joueurs strictement meilleurs.
+export function medalRank(score, totals, winMode) {
+  return (totals || []).filter(t => (winMode === 'lowest' ? t < score : t > score)).length;
+}
