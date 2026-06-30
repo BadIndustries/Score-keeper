@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot } from './gameLogic.js'
+import { GAMES } from './games.config.js'
 
 describe('computeTourScores', () => {
   describe('Odin / Roi des Nains / Skyjo (sans double)', () => {
@@ -409,5 +410,84 @@ describe('medalRank (ex aequo = meme medaille)', () => {
   it('totals vide ou absent ne crash pas', () => {
     expect(medalRank(5, [], 'lowest')).toBe(0)
     expect(medalRank(5, undefined, 'lowest')).toBe(0)
+  })
+})
+
+describe('normalizeActiveGame (migration legacy)', () => {
+  it('Skyjo legacy sans doubled : remplit doubled, current, history', () => {
+    const ag = normalizeActiveGame('skyjo', { players: ['A', 'B'], totals: [10, 20] })
+    expect(ag.doubled).toEqual([false, false])
+    expect(ag.current).toEqual([0, 0])
+    expect(ag.history).toEqual([])
+  })
+
+  it('Flip7 legacy sans flip7/flip7dbl : remplit à false', () => {
+    const ag = normalizeActiveGame('flip7', { players: ['A', 'B', 'C'] })
+    expect(ag.flip7).toEqual([false, false, false])
+    expect(ag.flip7dbl).toEqual([false, false, false])
+  })
+
+  it('totals/current trop courts sont complétés à la longueur des joueurs', () => {
+    const ag = normalizeActiveGame('odin', { players: ['A', 'B', 'C'], totals: [5] })
+    expect(ag.totals).toEqual([5, 0, 0])
+    expect(ag.current).toEqual([0, 0, 0])
+  })
+
+  it('objet sans joueurs ou nul → null', () => {
+    expect(normalizeActiveGame('odin', { players: [] })).toBeNull()
+    expect(normalizeActiveGame('odin', null)).toBeNull()
+    expect(normalizeActiveGame('odin', { foo: 1 })).toBeNull()
+  })
+
+  it('gameId inconnu → null', () => {
+    expect(normalizeActiveGame('inconnu', { players: ['A'] })).toBeNull()
+  })
+
+  it('jeu à feuille sans tmScores : initialise tmScores et tmExtensions', () => {
+    const ag = normalizeActiveGame('terraforming', { players: ['A', 'B'] })
+    expect(ag.tmScores).toHaveLength(2)
+    expect(ag.tmScores[0].tr).toBe(14)
+    expect(ag.tmExtensions).toEqual({})
+  })
+
+  it('tour/manche par défaut à 1 si absents', () => {
+    const ag = normalizeActiveGame('odin', { players: ['A'] })
+    expect(ag.tour).toBe(1)
+    expect(ag.manche).toBe(1)
+  })
+
+  it('Barbu : history d objets conservé, pas de tmScores', () => {
+    const hist = [{ contract: 'plis', scores: [-5, 0] }]
+    const ag = normalizeActiveGame('barbu', { players: ['A', 'B'], totals: [-5, 0], history: hist })
+    expect(ag.history).toBe(hist)
+    expect(ag.tmScores).toBeUndefined()
+  })
+})
+
+describe('makeWinSnapshot', () => {
+  it('utilise totalsOverride et calcule les gagnants ex aequo', () => {
+    const ag = { players: ['A', 'B', 'C'], tour: 3, groupId: 'g', limit: 15 }
+    const snap = makeWinSnapshot(ag, { winMode: 'lowest' }, 'odin', [5, 5, 12])
+    expect(snap.totals).toEqual([5, 5, 12])
+    expect(snap.winners).toEqual(['A', 'B'])
+    expect(snap.roundNum).toBe(3)
+    expect(snap.roundLabel).toBe('Manche')
+    expect(snap.groupId).toBe('g')
+  })
+
+  it('roundLabel : Tour pour flip7, Contrat pour barbu', () => {
+    const ag = { players: ['A'], tour: 1 }
+    expect(makeWinSnapshot(ag, { winMode: 'highest' }, 'flip7', [10]).roundLabel).toBe('Tour')
+    expect(makeWinSnapshot(ag, { winMode: 'highest' }, 'barbu', [0]).roundLabel).toBe('Contrat')
+  })
+
+  it('jeu à feuille : recalcule les totaux depuis tmScores (pas totalsOverride)', () => {
+    const G = GAMES.terraforming
+    const ag = { players: ['A', 'B'], tmExtensions: {}, tour: 1,
+      tmScores: [{ tr: 20, milestones: 5 }, { tr: 14 }], totals: [999, 999] }
+    const snap = makeWinSnapshot(ag, G, 'terraforming')
+    expect(snap.totals[0]).toBe(25)
+    expect(snap.totals[1]).toBe(14)
+    expect(snap.winners).toEqual(['A'])
   })
 })

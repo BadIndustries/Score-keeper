@@ -1,4 +1,5 @@
 import { KEY_GROUPS, GAMES, DEFAULT_LIMITS, genId } from './games.config.js';
+import { normalizeActiveGame } from './gameLogic.js';
 
 export function defaultGroups() {
   return [{
@@ -32,7 +33,9 @@ export function loadActiveGame(gameId) {
     const r = localStorage.getItem(GAMES[gameId].key);
     if (r) {
       const d = JSON.parse(r);
-      if (d && typeof d === 'object' && d.activeGame && typeof d.activeGame === 'object') return d.activeGame;
+      if (d && typeof d === 'object' && d.activeGame && typeof d.activeGame === 'object') {
+        return normalizeActiveGame(gameId, d.activeGame);
+      }
     }
   } catch { /* données illisibles -> pas de partie en cours */ }
   return null;

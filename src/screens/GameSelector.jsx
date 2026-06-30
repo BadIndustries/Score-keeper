@@ -188,7 +188,7 @@ export function GameSelector({ onSelect }) {
               </div>
               <div onClick={()=>{setShowSettings(false);setImportMsg(null);setUpdateMsg(null);}}
                 style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+                borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
             </div>
             <div style={{padding:"16px 18px 32px",display:"flex",flexDirection:"column",gap:10}}>
 
@@ -299,7 +299,7 @@ export function GameSelector({ onSelect }) {
               <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>💡 Installer l’app</span>
               <div onClick={()=>setShowInstall(false)}
                 style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+                borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
             </div>
             <div style={{overflowY:"auto",flex:1,padding:"14px 18px 32px"}}>
               <div style={{fontSize:".8rem",color:"rgba(255,255,255,.6)",lineHeight:1.5,marginBottom:18}}>
@@ -356,7 +356,7 @@ export function GameSelector({ onSelect }) {
               <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>🆕 Nouveautés</span>
               <div onClick={()=>setShowChangelog(false)}
                 style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+                borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
             </div>
             <div style={{overflowY:"auto",flex:1,padding:"14px 18px 32px"}}>
               {CHANGELOG.map((rel,ri)=>(
@@ -392,7 +392,7 @@ export function GameSelector({ onSelect }) {
                 padding:"0 16px 12px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}}>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>📋 Toutes les parties</span>
                 <div onClick={()=>setShowHistory(false)} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                  borderRadius:8,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
+                  borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
               </div>
               <div style={{overflowY:"auto",flex:1,padding:"8px 14px 24px"}}>
                 {history.length===0

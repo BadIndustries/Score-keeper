@@ -18,7 +18,7 @@ export function UpdatePrompt() {
     <div style={{
       position: 'fixed',
       left: 12, right: 12,
-      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
+      top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
       zIndex: 9999,
       background: '#13121a',
       border: '1px solid rgba(255,255,255,.14)',

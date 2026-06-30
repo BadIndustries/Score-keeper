@@ -70,9 +70,15 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 - `isGameOver(totals, limit)` : `Math.max(...totals) >= limit` — déclenche quand
   n'importe quel joueur atteint la limite (correct pour lowest ET highest win mode)
 - `getWinnerIndex(totals, winMode)` : index du gagnant
+- `medalRank(score, totals, winMode)` : rang « compétition » (ex æquo = même médaille). À utiliser PARTOUT pour les médailles (jamais l'index de position)
+- `makeWinSnapshot(ag, G, gameId, totalsOverride?)` : construit le snapshot du gagnant (figé AVANT que `update()` ne vide `activeGame`). `totalsOverride` pour validerRound ; sinon recalcule les totaux feuille. Évite la divergence validerRound/finDePartie
 - `recordPastGame(grp, gameId, ag, winMode)` : enregistre dans `grp.pastGames` (max 20)
   → le champ `pg.winners` est un tableau ; `pg.winner` est une chaîne (peut être "A, B" pour ex aequo)
   → pour les stats, toujours utiliser `pg.winners?.includes(name) || name === pg.winner`
+
+### Persistance & migration
+- `normalizeActiveGame(gameId, ag)` (gameLogic) est appelé par `loadActiveGame` : garantit que tous les tableaux du schéma du jeu existent (parties legacy sans `doubled`/`flip7`/`tmScores` → plus de crash). Retourne `null` si inexploitable
+- `persist` lève en cas de quota plein → `setSaveError(true)` affiche une bannière rouge (échec non silencieux)
 
 ### Multi-touch (WhoStartsApp)
 - `fDebounceRef` (300ms) pour laisser le temps aux doigts successifs d'arriver

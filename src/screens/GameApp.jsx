@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, makeWinSnapshot } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
 
 export function GameApp({ gameId, onBack }) {
@@ -14,6 +14,10 @@ export function GameApp({ gameId, onBack }) {
   const [tmStep, setTmStep] = useState(0);
   const [contractDraft, setContractDraft] = useState(null);
   const pressTimers = useRef({});
+  // Nettoyage des timers d'appui long si le composant démonte pendant un appui.
+  useEffect(() => () => {
+    Object.values(pressTimers.current).forEach(id => { clearTimeout(id); clearInterval(id); });
+  }, []);
   function pressProps(key, fn) {
     const start = () => {
       fn();
@@ -28,6 +32,7 @@ export function GameApp({ gameId, onBack }) {
     return { onPointerDown:e=>{e.preventDefault();start();}, onPointerUp:stop, onPointerLeave:stop, onPointerCancel:stop };
   }
   const [toast, setToast] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [editState, setEditState] = useState(null);
   const [quickState, setQuickState] = useState(null);
   const [pastGroupId, setPastGroupId] = useState(null);
@@ -39,8 +44,9 @@ export function GameApp({ gameId, onBack }) {
     try {
       saveGroups(next.groups);
       saveActiveGame(gameId, next.activeGame);
+      setSaveError(false);
       setToast(true); setTimeout(()=>setToast(false), 1600);
-    } catch(e) { console.error('persist failed', e); }
+    } catch(e) { console.error('persist failed', e); setSaveError(true); }
   }, [gameId]);
 
   const update = useCallback((fn) => {
@@ -64,8 +70,8 @@ export function GameApp({ gameId, onBack }) {
     scroll: { flex:1, overflowY:"auto", padding:"10px 12px" },
     sLabel: { fontSize:".6rem", letterSpacing:".18em", textTransform:"uppercase", color:G.sub, marginBottom:8, marginTop:4 },
     footer: { flexShrink:0, padding:`8px 12px calc(env(safe-area-inset-bottom, 0px) + 8px)`, borderTop:`1px solid ${G.border}`, display:"flex", gap:8 },
-    iconBtn: { background:G.surface2, border:`1px solid ${G.border}`, borderRadius:8, width:34, height:34,
-      display:"flex", alignItems:"center", justifyContent:"center", fontSize:".9rem", cursor:"pointer", flexShrink:0 },
+    iconBtn: { background:G.surface2, border:`1px solid ${G.border}`, borderRadius:8, width:40, height:40,
+      display:"flex", alignItems:"center", justifyContent:"center", fontSize:".95rem", cursor:"pointer", flexShrink:0 },
   }), [G]);
 
   function getGroupLimit(grp) {
@@ -182,10 +188,12 @@ export function GameApp({ gameId, onBack }) {
   function toggleDouble(i){ update(a=>{a.activeGame.doubled[i]=!a.activeGame.doubled[i];return a;}); }
 
   function startContract(c){
+    // Mode classement (réussite) : null = non saisi (≠ dernier). Sinon 0.
+    const init=c.mode==="rank"?null:0;
     setContractDraft({
       key: c.key,
       step: 0,
-      counts: Object.fromEntries(c.components.map(comp=>[comp.key, g.players.map(()=>0)])),
+      counts: Object.fromEntries(c.components.map(comp=>[comp.key, g.players.map(()=>init)])),
     });
   }
   function adjustContractCount(compKey, i, d, max){
@@ -195,16 +203,22 @@ export function GameApp({ gameId, onBack }) {
       return {...dr, counts:{...dr.counts, [compKey]:arr}};
     });
   }
-  function setContractValue(compKey, i, v){
+  // Réussite : un rang est unique. Attribuer un rang à un joueur le retire
+  // de tout autre joueur qui l'avait (toggle si on retape le même).
+  function setReussiteRank(compKey, i, pts){
     setContractDraft(dr=>{
-      const arr=[...dr.counts[compKey]];
-      arr[i]=v;
+      const cur=dr.counts[compKey];
+      const arr=cur.map((v,j)=>{
+        if(j===i) return v===pts ? null : pts;   // re-tap = désélection
+        return v===pts ? null : v;                // libère le rang chez les autres
+      });
       return {...dr, counts:{...dr.counts, [compKey]:arr}};
     });
   }
   function validerContract(){
     if(!g||!contractDraft)return;
     const contract=G.contracts.find(c=>c.key===contractDraft.key);
+    if(!contract){ setContractDraft(null); return; }
     const scores=computeContractScores(contract, contractDraft.counts, g.players.length);
     update(a=>{
       const ag=a.activeGame;
@@ -233,13 +247,7 @@ export function GameApp({ gameId, onBack }) {
     }
     const newTotals=g.totals.map((t,i)=>t+tourScores[i]);
     const won=!G.endOnDemand && isGameOver(newTotals, g.limit);
-    const winSnap=won ? (()=>{
-      const best=G.winMode==='lowest'?Math.min(...newTotals):Math.max(...newTotals);
-      return {players:[...g.players],totals:newTotals,
-        winners:g.players.filter((_,i)=>newTotals[i]===best),
-        roundNum:g.tour||g.manche||1,roundLabel:gameId==="flip7"?"Tour":"Manche",
-        groupId:g.groupId,limit:g.limit,tmExtensions:g.tmExtensions};
-    })() : null;
+    const winSnap=won ? makeWinSnapshot(g, G, gameId, newTotals) : null;
 
     update(a=>{
       const ag=a.activeGame;
@@ -288,13 +296,7 @@ export function GameApp({ gameId, onBack }) {
 
   function finDePartie(){
     if(!window.confirm("Terminer la partie ?"))return;
-    const tmFields=G.scoreType==="sheet"?tmGetAllFields(G,g.tmExtensions||{}):null;
-    const totals=tmFields&&g.tmScores?g.tmScores.map(s=>computeTMTotal(s,tmFields)):[...g.totals];
-    const best=G.winMode==='lowest'?Math.min(...totals):Math.max(...totals);
-    const snap={players:[...g.players],totals,
-      winners:g.players.filter((_,i)=>totals[i]===best),
-      roundNum:g.tour||g.manche||1,roundLabel:gameId==="flip7"?"Tour":gameId==="barbu"?"Contrat":"Manche",
-      groupId:g.groupId,limit:g.limit,tmExtensions:g.tmExtensions||{}};
+    const snap=makeWinSnapshot(g, G, gameId);
     update(a=>{
       const ag=a.activeGame;
       if(ag.groupId){
@@ -343,9 +345,13 @@ export function GameApp({ gameId, onBack }) {
 
   return (
     <div style={S.root}>
-      {toast && <div style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 8px)",left:"50%",transform:"translateX(-50%)",
+      {toast && !saveError && <div style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 8px)",left:"50%",transform:"translateX(-50%)",
         background:G.btnBg,color:G.btnColor,fontSize:".68rem",letterSpacing:".08em",
         padding:"5px 16px",borderRadius:20,zIndex:99,whiteSpace:"nowrap",pointerEvents:"none",opacity:.92}}>✓ Sauvegardé</div>}
+      {saveError && <div onClick={()=>setSaveError(false)} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 8px)",left:"50%",transform:"translateX(-50%)",
+        background:"#b91c1c",color:"#fff",fontSize:".7rem",letterSpacing:".02em",maxWidth:"92vw",textAlign:"center",
+        padding:"8px 16px",borderRadius:12,zIndex:99,boxShadow:"0 4px 20px rgba(0,0,0,.5)",cursor:"pointer"}}>
+        ⚠️ Sauvegarde impossible (mémoire pleine ?). Tes derniers points pourraient être perdus.</div>}
 
       {/* ── HOME ── */}
       {screen==="home" && <>
@@ -552,7 +558,7 @@ export function GameApp({ gameId, onBack }) {
                         border:"1px solid rgba(196,74,58,.3)",background:"rgba(196,74,58,.15)",color:"#ff8070",
                         fontSize:"1.2rem",display:"flex",alignItems:"center",justifyContent:"center",
                         cursor:"pointer",userSelect:"none",flexShrink:0}}>−</div>
-                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit===null){setDirectEdit(i);setDirectVal(String(cur));}}}>
+                      <div style={{flex:1,textAlign:"center"}} onClick={()=>{if(directEdit!==i){setDirectEdit(i);setDirectVal(String(cur));}}}>
                         {directEdit===i
                           ? <input type="number" autoFocus value={directVal}
                               onChange={e=>setDirectVal(e.target.value)}
@@ -960,19 +966,20 @@ export function GameApp({ gameId, onBack }) {
                 const rewards=reussiteRankRewards(g.players.length, contract.rankStep);
                 return g.players.map((name,i)=>{
                   const val=contractDraft.counts[comp.key][i];
+                  const saisi=val!=null;
                   return (
-                    <div key={i} style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:14,
+                    <div key={i} style={{background:G.surface,border:`1px solid ${saisi?G.border:"#7a3030"}`,borderRadius:14,
                       padding:"10px 14px 10px 16px",position:"relative",flexShrink:0}}>
                       <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                         <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
-                        <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:900,color:val>0?"#6dcc90":G.sub,lineHeight:1}}>{val>0?`+${val}`:"0"}</span>
+                        <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:900,color:val>0?"#6dcc90":saisi?G.sub:"#c87070",lineHeight:1}}>{!saisi?"—":val>0?`+${val}`:"0"}</span>
                       </div>
                       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
                         {rewards.map((pts,r)=>{
                           const sel=val===pts;
                           return (
-                            <div key={r} onClick={()=>setContractValue(comp.key,i,pts)}
+                            <div key={r} onClick={()=>setReussiteRank(comp.key,i,pts)}
                               style={{flex:"1 1 auto",minWidth:54,height:42,borderRadius:10,cursor:"pointer",userSelect:"none",
                                 border:`1px solid ${sel?G.color:G.border}`,background:sel?G.colorDim:G.surface2,
                                 display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
@@ -1033,7 +1040,10 @@ export function GameApp({ gameId, onBack }) {
             </div>
 
             <div style={S.footer}>
-              <Btn ghost G={G} onClick={()=>setContractDraft(null)}>✕ Annuler</Btn>
+              <Btn ghost G={G} onClick={()=>{
+                const saisi=Object.values(contractDraft.counts).some(arr=>arr.some(v=>v));
+                if(!saisi || window.confirm("Annuler ce contrat ? La saisie sera perdue.")) setContractDraft(null);
+              }}>✕ Annuler</Btn>
               {contractDraft.step>0 && <Btn ghost G={G} onClick={()=>setContractDraft(dr=>({...dr,step:dr.step-1}))}>◀</Btn>}
               {isLast
                 ? <Btn primary G={G} style={{flex:1}} onClick={validerContract}>✓ Valider le contrat</Btn>
@@ -1316,7 +1326,7 @@ export function GameApp({ gameId, onBack }) {
       {/* ── WIN SCREEN ── */}
       {showWin && winSnapshot && (()=>{
         const { players, totals, winners, roundNum: wRN, roundLabel: wRL } = winSnapshot;
-        const ranked=[...players.map((name,i)=>({name,score:totals[i]}))];
+        const ranked=[...players.map((name,i)=>({name,i,score:totals[i]}))];
         ranked.sort((a,b)=>G.winMode==="lowest"?a.score-b.score:b.score-a.score);
         const winTitle=winners.length>1?`${winners.join(' et ')} gagnent !`:`${ranked[0].name} gagne !`;
         return (
@@ -1326,8 +1336,8 @@ export function GameApp({ gameId, onBack }) {
             <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.6rem",color:G.accent,fontWeight:900,marginBottom:4}}>{winTitle}</div>
             <div style={{color:G.sub,fontSize:".82rem",marginBottom:18}}>Partie terminée en {wRN} {wRL.toLowerCase()}{wRN>1?"s":""}</div>
             <div style={{display:"flex",flexDirection:"column",gap:7,width:"100%",maxWidth:300,marginBottom:28}}>
-              {ranked.map((r,idx)=>(
-                <div key={idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              {ranked.map((r)=>(
+                <div key={r.i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
                   background:G.surface,borderRadius:10,padding:"10px 16px",
                   border:`1px solid ${medalRank(r.score, totals, G.winMode)===0?G.color:G.border}`}}>
                   <span style={{fontFamily:"'Cinzel',serif",fontSize:".9rem"}}>{MEDALS[medalRank(r.score, totals, G.winMode)]} {r.name}</span>

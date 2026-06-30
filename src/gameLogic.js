@@ -1,3 +1,5 @@
+import { GAMES } from './games.config.js';
+
 const FLIP7_BONUS = 15;
 
 export function makeActiveGame(gameId, groupId, players, limit) {
@@ -96,4 +98,58 @@ export function reussiteRankRewards(playerCount, step) {
 // Retourne l'index de médaille (0 = 1er) = nombre de joueurs strictement meilleurs.
 export function medalRank(score, totals, winMode) {
   return (totals || []).filter(t => (winMode === 'lowest' ? t < score : t > score)).length;
+}
+
+// Normalise/migre un activeGame chargé du localStorage : garantit que tous les
+// tableaux attendus par le schéma du jeu existent (parties legacy ou corrompues).
+// Retourne null si l'objet est inexploitable (pas de joueurs).
+export function normalizeActiveGame(gameId, ag) {
+  if (!ag || typeof ag !== 'object') return null;
+  const G = GAMES[gameId];
+  if (!G) return null;
+  const players = Array.isArray(ag.players) ? ag.players : [];
+  const n = players.length;
+  if (n === 0) return null;
+  const fill = (arr, def) => {
+    const a = Array.isArray(arr) ? arr.slice(0, n) : [];
+    while (a.length < n) a.push(def);
+    return a;
+  };
+  ag.players = players;
+  ag.totals = fill(ag.totals, 0);
+  ag.current = fill(ag.current, 0);
+  ag.history = Array.isArray(ag.history) ? ag.history : [];
+  ag.tour = Number.isFinite(ag.tour) ? ag.tour : 1;
+  ag.manche = Number.isFinite(ag.manche) ? ag.manche : 1;
+  if (gameId === 'flip7') { ag.flip7 = fill(ag.flip7, false); ag.flip7dbl = fill(ag.flip7dbl, false); }
+  if (gameId === 'skyjo') { ag.doubled = fill(ag.doubled, false); }
+  if (G.scoreType === 'sheet') {
+    ag.tmExtensions = (ag.tmExtensions && typeof ag.tmExtensions === 'object') ? ag.tmExtensions : {};
+    const fields = tmGetAllFields(G, ag.tmExtensions);
+    if (!Array.isArray(ag.tmScores) || ag.tmScores.length !== n) {
+      ag.tmScores = players.map(() => Object.fromEntries(fields.map(f => [f.key, f.default ?? 0])));
+    }
+  }
+  return ag;
+}
+
+// Construit le snapshot du gagnant (figé avant que update() ne vide activeGame).
+// totalsOverride : totaux déjà calculés (validerRound) ; sinon recalculés
+// depuis les tmScores pour les jeux à feuille (cohérence garantie).
+export function makeWinSnapshot(ag, G, gameId, totalsOverride) {
+  const fields = G.scoreType === 'sheet' ? tmGetAllFields(G, ag.tmExtensions || {}) : null;
+  const totals = totalsOverride
+    ? [...totalsOverride]
+    : (fields && ag.tmScores ? ag.tmScores.map(s => computeTMTotal(s, fields)) : [...ag.totals]);
+  const best = G.winMode === 'lowest' ? Math.min(...totals) : Math.max(...totals);
+  return {
+    players: [...ag.players],
+    totals,
+    winners: ag.players.filter((_, i) => totals[i] === best),
+    roundNum: ag.tour || ag.manche || 1,
+    roundLabel: gameId === 'flip7' ? 'Tour' : gameId === 'barbu' ? 'Contrat' : 'Manche',
+    groupId: ag.groupId,
+    limit: ag.limit,
+    tmExtensions: ag.tmExtensions || {},
+  };
 }

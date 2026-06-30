@@ -19,11 +19,11 @@ export function LimitCtrl({ value, onChange, G, min, max, step, label }) {
       <span style={{ fontSize:".8rem", color:G.sub }}>{label}</span>
       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
         <div role="button" tabIndex={0} aria-label="Diminuer" onClick={()=>onChange(Math.max(min,value-step))} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onChange(Math.max(min,value-step));}}}
-          style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:6, width:28, height:28,
+          style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:6, width:36, height:36,
             display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", userSelect:"none" }}>−</div>
         <span style={{ fontFamily:"'Cinzel',serif", fontSize:"1.1rem", color:G.accent, minWidth:"3.5ch", textAlign:"center" }}>{value}</span>
         <div role="button" tabIndex={0} aria-label="Augmenter" onClick={()=>onChange(Math.min(max,value+step))} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onChange(Math.min(max,value+step));}}}
-          style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:6, width:28, height:28,
+          style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:6, width:36, height:36,
             display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", userSelect:"none" }}>＋</div>
       </div>
     </div>
@@ -38,7 +38,7 @@ export function PlayerEditRow({ name, index, onChange, onRemove, canRemove }) {
       <input type="text" placeholder={`Joueur ${index+1}`} maxLength={16} value={name}
         onChange={e=>onChange(e.target.value)}
         style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"inherit", fontFamily:"inherit", fontSize:".9rem" }}/>
-      {canRemove && <button onClick={onRemove} style={{ background:"none", border:"none", color:"rgba(255,255,255,.3)", fontSize:"1.1rem", cursor:"pointer", padding:2 }}>✕</button>}
+      {canRemove && <button onClick={onRemove} aria-label="Retirer le joueur" style={{ background:"none", border:"none", color:"rgba(255,255,255,.4)", fontSize:"1.1rem", cursor:"pointer", width:36, height:36, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>}
     </div>
   );
 }
