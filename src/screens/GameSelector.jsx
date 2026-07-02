@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { GAMES, MEDALS, KEY_GROUPS } from '../games.config.js';
 import { saveGroups, loadGroups } from '../storage.js';
-import { GIcon, MIN_PLAYERS } from '../ui.jsx';
+import { GIcon, MIN_PLAYERS, BottomSheet } from '../ui.jsx';
 import { medalRank } from '../gameLogic.js';
 import { CHANGELOG } from '../changelog.js';
 
@@ -174,23 +174,12 @@ export function GameSelector({ onSelect }) {
 
       {/* ── SETTINGS SHEET ── */}
       {showSettings && (
-        <div onClick={e=>{if(e.target===e.currentTarget){setShowSettings(false);setImportMsg(null);setUpdateMsg(null);}}}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
-          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:50}}>
-          <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
-            width:"100%",display:"flex",flexDirection:"column"}}>
-            <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px"}}/>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"0 16px 12px",borderBottom:"1px solid rgba(255,255,255,.07)"}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>ℹ️ À propos</span>
-              <div style={{fontSize:".62rem",color:"rgba(255,255,255,.2)",letterSpacing:".08em"}}>
-                Version {__APP_VERSION__} — {__BUILD_DATE__}
-              </div>
-              <div onClick={()=>{setShowSettings(false);setImportMsg(null);setUpdateMsg(null);}}
-                style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
-            </div>
-            <div style={{padding:"16px 18px 32px",display:"flex",flexDirection:"column",gap:10}}>
+        <BottomSheet title="ℹ️ À propos" maxHeight="88%" zIndex={50}
+          onClose={()=>{setShowSettings(false);setImportMsg(null);setUpdateMsg(null);}}
+          headerExtra={<div style={{fontSize:".62rem",color:"rgba(255,255,255,.2)",letterSpacing:".08em"}}>
+            Version {__APP_VERSION__} — {__BUILD_DATE__}
+          </div>}>
+            <div style={{padding:"16px 18px 32px",display:"flex",flexDirection:"column",gap:10,overflowY:"auto",flex:1}}>
 
               {/* Update */}
               <div onClick={updating ? undefined : checkUpdate}
@@ -282,25 +271,12 @@ export function GameSelector({ onSelect }) {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       )}
 
       {/* ── INSTALL TIP OVERLAY ── */}
       {showInstall && (
-        <div onClick={e=>{if(e.target===e.currentTarget)setShowInstall(false);}}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
-          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:60}}>
-          <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
-            width:"100%",maxHeight:"88%",display:"flex",flexDirection:"column"}}>
-            <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"0 16px 12px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>💡 Installer l’app</span>
-              <div onClick={()=>setShowInstall(false)}
-                style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
-            </div>
+        <BottomSheet title="💡 Installer l’app" maxHeight="88%" zIndex={60} onClose={()=>setShowInstall(false)}>
             <div style={{overflowY:"auto",flex:1,padding:"14px 18px 32px"}}>
               <div style={{fontSize:".8rem",color:"rgba(255,255,255,.6)",lineHeight:1.5,marginBottom:18}}>
                 Ajoute Score Keeper à ton écran d’accueil pour l’ouvrir comme une vraie application,
@@ -339,25 +315,12 @@ export function GameSelector({ onSelect }) {
                 et pas dans le navigateur intégré d’une autre app.
               </div>
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       )}
 
       {/* ── CHANGELOG OVERLAY ── */}
       {showChangelog && (
-        <div onClick={e=>{if(e.target===e.currentTarget)setShowChangelog(false);}}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
-          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:60}}>
-          <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
-            width:"100%",maxHeight:"86%",display:"flex",flexDirection:"column"}}>
-            <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"0 16px 12px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>🆕 Nouveautés</span>
-              <div onClick={()=>setShowChangelog(false)}
-                style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
-            </div>
+        <BottomSheet title="🆕 Nouveautés" maxHeight="86%" zIndex={60} onClose={()=>setShowChangelog(false)}>
             <div style={{overflowY:"auto",flex:1,padding:"14px 18px 32px"}}>
               {CHANGELOG.map((rel,ri)=>(
                 <div key={ri} style={{marginBottom:18}}>
@@ -374,26 +337,14 @@ export function GameSelector({ onSelect }) {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       )}
 
       {/* ── HISTORY OVERLAY ── */}
       {showHistory && (()=>{
         const history = allHistory();
         return (
-          <div onClick={e=>{if(e.target===e.currentTarget)setShowHistory(false);}}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",
-            flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:50}}>
-            <div style={{background:"#13121a",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,.08)",
-              width:"100%",maxHeight:"82%",display:"flex",flexDirection:"column"}}>
-              <div style={{width:36,height:4,background:"rgba(255,255,255,.15)",borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-                padding:"0 16px 12px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}}>
-                <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:"#fff"}}>📋 Toutes les parties</span>
-                <div onClick={()=>setShowHistory(false)} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)",
-                  borderRadius:8,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>✕</div>
-              </div>
+          <BottomSheet title="📋 Toutes les parties" maxHeight="82%" zIndex={50} onClose={()=>setShowHistory(false)}>
               <div style={{overflowY:"auto",flex:1,padding:"8px 14px 24px"}}>
                 {history.length===0
                   ? <div style={{color:"rgba(255,255,255,.3)",textAlign:"center",padding:30,fontSize:".85rem"}}>Aucune partie enregistrée</div>
@@ -423,8 +374,7 @@ export function GameSelector({ onSelect }) {
                     })
                 }
               </div>
-            </div>
-          </div>
+          </BottomSheet>
         );
       })()}
     </div>

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
 import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, makeWinSnapshot } from '../gameLogic.js';
-import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow } from '../ui.jsx';
+import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow, BottomSheet } from '../ui.jsx';
 
 export function GameApp({ gameId, onBack }) {
   const G = GAMES[gameId];
@@ -1055,17 +1055,7 @@ export function GameApp({ gameId, onBack }) {
 
       {/* ── SHEET: HISTORY ── */}
       {sheet==="history" && g && (
-        <div onClick={e=>{if(e.target===e.currentTarget)setSheet(null);}}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",
-          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:10}}>
-          <div style={{background:G.surface,borderRadius:"20px 20px 0 0",border:`1px solid ${G.border}`,
-            width:"100%",maxHeight:"78%",display:"flex",flexDirection:"column"}}>
-            <div style={{width:36,height:4,background:G.border,borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"0 16px 10px",flexShrink:0,borderBottom:`1px solid ${G.border}`}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:G.accent}}>📜 Historique</span>
-              <div style={S.iconBtn} onClick={()=>setSheet(null)}>✕</div>
-            </div>
+        <BottomSheet title="📜 Historique" G={G} maxHeight="78%" onClose={()=>setSheet(null)}>
             <div style={{overflowY:"auto",flex:1,padding:"10px 14px"}}>
               {g.history.length===0
                 ? <div style={{color:G.sub,textAlign:"center",padding:20}}>Aucun tour encore</div>
@@ -1097,23 +1087,12 @@ export function GameApp({ gameId, onBack }) {
                   </table>
               }
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       )}
 
       {/* ── SHEET: RULES (Barbu) ── */}
       {sheet==="rules" && g && G.scoreType==="contracts" && (
-        <div onClick={e=>{if(e.target===e.currentTarget)setSheet(null);}}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",
-          flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:10}}>
-          <div style={{background:G.surface,borderRadius:"20px 20px 0 0",border:`1px solid ${G.border}`,
-            width:"100%",maxHeight:"86%",display:"flex",flexDirection:"column"}}>
-            <div style={{width:36,height:4,background:G.border,borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-              padding:"0 16px 10px",flexShrink:0,borderBottom:`1px solid ${G.border}`}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:G.accent}}>📖 Règles — {G.label}</span>
-              <div style={S.iconBtn} onClick={()=>setSheet(null)}>✕</div>
-            </div>
+        <BottomSheet title={`📖 Règles — ${G.label}`} G={G} maxHeight="86%" onClose={()=>setSheet(null)}>
             <div style={{overflowY:"auto",flex:1,padding:"12px 16px 24px"}}>
               <div style={{fontSize:".8rem",color:G.text,lineHeight:1.5,marginBottom:14}}>
                 Jeu à contrats. <strong style={{color:G.accent}}>Le moins de points gagne</strong> (les scores sont négatifs,
@@ -1160,25 +1139,14 @@ export function GameApp({ gameId, onBack }) {
                 +{G.contracts.find(c=>c.mode==="rank")?.rankStep} points par joueur battu.
               </div>
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       )}
 
       {/* ── SHEET: PAST GAMES ── */}
       {sheet==="past" && pastGroupId && (()=>{
         const grp=data.groups.find(x=>x.id===pastGroupId);
         return (
-          <div onClick={e=>{if(e.target===e.currentTarget)setSheet(null);}}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",
-            flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:10}}>
-            <div style={{background:G.surface,borderRadius:"20px 20px 0 0",border:`1px solid ${G.border}`,
-              width:"100%",maxHeight:"78%",display:"flex",flexDirection:"column"}}>
-              <div style={{width:36,height:4,background:G.border,borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-                padding:"0 16px 10px",flexShrink:0,borderBottom:`1px solid ${G.border}`}}>
-                <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:G.accent}}>🏆 Parties passées</span>
-                <div style={S.iconBtn} onClick={()=>setSheet(null)}>✕</div>
-              </div>
+          <BottomSheet title="🏆 Parties passées" G={G} maxHeight="78%" onClose={()=>setSheet(null)}>
               <div style={{overflowY:"auto",flex:1,padding:"10px 14px"}}>
                 {!grp?.pastGames?.length
                   ? <div style={{color:G.sub,textAlign:"center",padding:20}}>Aucune partie enregistrée</div>
@@ -1206,8 +1174,7 @@ export function GameApp({ gameId, onBack }) {
                     })
                 }
               </div>
-            </div>
-          </div>
+          </BottomSheet>
         );
       })()}
 
@@ -1225,17 +1192,7 @@ export function GameApp({ gameId, onBack }) {
         });
         const players = Object.entries(overall).sort((a,b)=>b[1].wins-a[1].wins);
         return (
-          <div onClick={e=>{if(e.target===e.currentTarget){setSheet(null);setStatsGrpId(null);}}}
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",
-            flexDirection:"column",alignItems:"center",justifyContent:"flex-end",zIndex:10}}>
-            <div style={{background:G.surface,borderRadius:"20px 20px 0 0",border:`1px solid ${G.border}`,
-              width:"100%",maxHeight:"82%",display:"flex",flexDirection:"column"}}>
-              <div style={{width:36,height:4,background:G.border,borderRadius:2,margin:"10px auto 8px",flexShrink:0}}/>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-                padding:"0 16px 10px",flexShrink:0,borderBottom:`1px solid ${G.border}`}}>
-                <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",color:G.accent}}>📊 Stats — {grp.name}</span>
-                <div style={S.iconBtn} onClick={()=>{setSheet(null);setStatsGrpId(null);}}>✕</div>
-              </div>
+          <BottomSheet title={`📊 Stats — ${grp.name}`} G={G} maxHeight="82%" onClose={()=>{setSheet(null);setStatsGrpId(null);}}>
               <div style={{overflowY:"auto",flex:1,padding:"10px 14px 24px"}}>
                 {players.length===0
                   ? <div style={{color:G.sub,textAlign:"center",padding:20}}>Aucune partie enregistrée</div>
@@ -1318,8 +1275,7 @@ export function GameApp({ gameId, onBack }) {
                     </>
                 }
               </div>
-            </div>
-          </div>
+          </BottomSheet>
         );
       })()}
 

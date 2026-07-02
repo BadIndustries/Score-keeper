@@ -43,6 +43,38 @@ export function PlayerEditRow({ name, index, onChange, onRemove, canRemove }) {
   );
 }
 
+// ── BOTTOM SHEET ─────────────────────────────────────────────────────
+// Conteneur d'overlay partagé : backdrop, poignée, header (titre + ✕), corps.
+// Avec `G` : couleurs du thème du jeu ; sans : thème neutre sombre (GameSelector).
+// Le children doit gérer son propre scroll (ex: { overflowY:"auto", flex:1 }).
+export function BottomSheet({ title, onClose, children, maxHeight = "82%", zIndex = 10, G, headerExtra }) {
+  const th = G
+    ? { backdrop: "rgba(0,0,0,.82)", surface: G.surface, border: G.border, headerBorder: G.border,
+        handle: G.border, title: G.accent, closeBg: G.surface2, closeBorder: G.border }
+    : { backdrop: "rgba(0,0,0,.85)", surface: "#13121a", border: "rgba(255,255,255,.08)", headerBorder: "rgba(255,255,255,.07)",
+        handle: "rgba(255,255,255,.15)", title: "#fff", closeBg: "rgba(255,255,255,.08)", closeBorder: "rgba(255,255,255,.1)" };
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, background: th.backdrop, display: "flex",
+        flexDirection: "column", alignItems: "center", justifyContent: "flex-end", zIndex }}>
+      <div style={{ background: th.surface, borderRadius: "20px 20px 0 0", border: `1px solid ${th.border}`,
+        width: "100%", maxHeight, display: "flex", flexDirection: "column" }}>
+        <div style={{ width: 36, height: 4, background: th.handle, borderRadius: 2, margin: "10px auto 8px", flexShrink: 0 }}/>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 16px 10px", flexShrink: 0, borderBottom: `1px solid ${th.headerBorder}`, gap: 8 }}>
+          <span style={{ fontFamily: "'Cinzel',serif", fontSize: ".95rem", color: th.title }}>{title}</span>
+          {headerExtra}
+          <div onClick={onClose} aria-label="Fermer" role="button" tabIndex={0}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
+            style={{ background: th.closeBg, border: `1px solid ${th.closeBorder}`, borderRadius: 8, width: 40, height: 40,
+              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>✕</div>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ── GAME ENGINE ──────────────────────────────────────────────────────
 export const MIN_PLAYERS = 2;
 
