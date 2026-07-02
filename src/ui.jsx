@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { COLORS } from './games.config.js';
 import { GameIcon } from './GameIcons.jsx';
 
@@ -30,15 +31,50 @@ export function LimitCtrl({ value, onChange, G, min, max, step, label }) {
   );
 }
 
-export function PlayerEditRow({ name, index, onChange, onRemove, canRemove }) {
+// suggestions : noms de joueurs connus, proposés en liste déroulante au focus
+// (filtrés par la saisie, noms déjà présents dans `exclude` masqués).
+// Taper librement = créer un nouveau nom ; toucher une suggestion = la choisir.
+export function PlayerEditRow({ name, index, onChange, onRemove, canRemove, suggestions = [], exclude = [] }) {
+  const [focused, setFocused] = useState(false);
+  const norm = s => (s || "").trim().toLowerCase();
+  const taken = new Set(exclude.map(norm));
+  const q = norm(name);
+  const list = focused
+    ? suggestions.filter(s => {
+        const n = norm(s);
+        return n !== q && !taken.has(n) && (q === "" || n.includes(q));
+      }).slice(0, 6)
+    : [];
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(255,255,255,.04)",
-      border:"1px solid rgba(255,255,255,.08)", borderRadius:10, padding:"8px 10px", marginBottom:6 }}>
-      <div style={{ width:10, height:10, borderRadius:"50%", background:COLORS[index%COLORS.length], flexShrink:0 }}/>
-      <input type="text" placeholder={`Joueur ${index+1}`} maxLength={16} value={name}
-        onChange={e=>onChange(e.target.value)}
-        style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"inherit", fontFamily:"inherit", fontSize:".9rem" }}/>
-      {canRemove && <button onClick={onRemove} aria-label="Retirer le joueur" style={{ background:"none", border:"none", color:"rgba(255,255,255,.4)", fontSize:"1.1rem", cursor:"pointer", width:36, height:36, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>}
+    <div style={{ position:"relative", marginBottom:6 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(255,255,255,.04)",
+        border:"1px solid rgba(255,255,255,.08)", borderRadius:10, padding:"8px 10px" }}>
+        <div style={{ width:10, height:10, borderRadius:"50%", background:COLORS[index%COLORS.length], flexShrink:0 }}/>
+        <input type="text" placeholder={`Joueur ${index+1}`} maxLength={16} value={name}
+          onChange={e=>onChange(e.target.value)}
+          onFocus={()=>setFocused(true)}
+          onBlur={()=>setTimeout(()=>setFocused(false), 150)}
+          style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"inherit", fontFamily:"inherit", fontSize:".9rem" }}/>
+        {canRemove && <button onClick={onRemove} aria-label="Retirer le joueur" style={{ background:"none", border:"none", color:"rgba(255,255,255,.4)", fontSize:"1.1rem", cursor:"pointer", width:36, height:36, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>}
+      </div>
+      {list.length > 0 && (
+        <div style={{ position:"absolute", top:"calc(100% + 3px)", left:0, right:0, zIndex:30,
+          background:"#1c1b26", border:"1px solid rgba(255,255,255,.14)", borderRadius:10,
+          boxShadow:"0 8px 24px rgba(0,0,0,.55)", overflow:"hidden" }}>
+          {list.map(s=>(
+            <div key={s}
+              onPointerDown={e=>{ e.preventDefault(); onChange(s); setFocused(false); }}
+              style={{ display:"flex", alignItems:"center", gap:8, padding:"11px 12px", cursor:"pointer",
+                fontSize:".85rem", color:"rgba(255,255,255,.85)",
+                borderBottom:"1px solid rgba(255,255,255,.06)" }}>
+              <span style={{ fontSize:".8rem", opacity:.6 }}>👤</span>{s}
+            </div>
+          ))}
+          <div style={{ padding:"7px 12px", fontSize:".62rem", color:"rgba(255,255,255,.3)", fontStyle:"italic" }}>
+            …ou continue de taper pour un nouveau nom
+          </div>
+        </div>
+      )}
     </div>
   );
 }

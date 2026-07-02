@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers } from './gameLogic.js'
 import { GAMES } from './games.config.js'
 
 describe('computeTourScores', () => {
@@ -489,5 +489,39 @@ describe('makeWinSnapshot', () => {
     expect(snap.totals[0]).toBe(25)
     expect(snap.totals[1]).toBe(14)
     expect(snap.winners).toEqual(['A'])
+  })
+})
+
+describe('collectKnownPlayers (suggestions de noms)', () => {
+  it('collecte les joueurs de tous les groupes, tries alphabetiquement', () => {
+    const groups = [
+      { players: ['Zoe', 'Alice'] },
+      { players: ['Marc'] },
+    ]
+    expect(collectKnownPlayers(groups)).toEqual(['Alice', 'Marc', 'Zoe'])
+  })
+
+  it('inclut les noms des parties passees (joueurs retires des groupes)', () => {
+    const groups = [{
+      players: ['Alice'],
+      pastGames: [{ scores: [{ name: 'Bob', score: 10 }, { name: 'Alice', score: 5 }] }],
+    }]
+    expect(collectKnownPlayers(groups)).toEqual(['Alice', 'Bob'])
+  })
+
+  it('dedoublonne sans tenir compte de la casse (premiere graphie gagne)', () => {
+    const groups = [{ players: ['Johan'] }, { players: ['johan', 'JOHAN'] }]
+    expect(collectKnownPlayers(groups)).toEqual(['Johan'])
+  })
+
+  it('ignore les noms vides ou espaces', () => {
+    const groups = [{ players: ['', '  ', 'Alice'] }]
+    expect(collectKnownPlayers(groups)).toEqual(['Alice'])
+  })
+
+  it('groups absent ou vide → tableau vide', () => {
+    expect(collectKnownPlayers(undefined)).toEqual([])
+    expect(collectKnownPlayers([])).toEqual([])
+    expect(collectKnownPlayers([{}])).toEqual([])
   })
 })

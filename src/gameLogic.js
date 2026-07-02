@@ -100,6 +100,24 @@ export function medalRank(score, totals, winMode) {
   return (totals || []).filter(t => (winMode === 'lowest' ? t < score : t > score)).length;
 }
 
+// Tous les noms de joueurs connus : groupes actuels + parties passées.
+// Dédoublonnés (insensible à la casse, la première graphie rencontrée gagne),
+// triés alphabétiquement (fr).
+export function collectKnownPlayers(groups) {
+  const byKey = new Map();
+  (groups || []).forEach(grp => {
+    (grp.players || []).forEach(p => {
+      const n = (p || '').trim();
+      if (n && !byKey.has(n.toLowerCase())) byKey.set(n.toLowerCase(), n);
+    });
+    (grp.pastGames || []).forEach(pg => (pg.scores || []).forEach(s => {
+      const n = (s.name || '').trim();
+      if (n && !byKey.has(n.toLowerCase())) byKey.set(n.toLowerCase(), n);
+    }));
+  });
+  return [...byKey.values()].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
 // Normalise/migre un activeGame chargé du localStorage : garantit que tous les
 // tableaux attendus par le schéma du jeu existent (parties legacy ou corrompues).
 // Retourne null si l'objet est inexploitable (pas de joueurs).

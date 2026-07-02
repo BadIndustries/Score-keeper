@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, reussiteRankRewards, medalRank, makeWinSnapshot } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, reussiteRankRewards, medalRank, makeWinSnapshot, collectKnownPlayers } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow, BottomSheet } from '../ui.jsx';
 import { ClassicBoard } from './boards/ClassicBoard.jsx';
 import { SheetBoard } from './boards/SheetBoard.jsx';
@@ -36,6 +36,7 @@ export function GameApp({ gameId, onBack }) {
 
   const g = data.activeGame;
   const gameGroupName = g?.groupId ? (data.groups.find(x=>x.id===g.groupId)?.name||G.label) : "Partie rapide";
+  const knownPlayers = useMemo(()=>collectKnownPlayers(data.groups), [data.groups]);
 
   const S = useMemo(() => ({
     root: { fontFamily:"'DM Sans',sans-serif", background:G.bg, color:G.text, width:"100%", minHeight:"100vh",
@@ -346,6 +347,7 @@ export function GameApp({ gameId, onBack }) {
           <div style={{...S.sLabel,marginTop:10}}>Joueurs <span style={{color:G.sub}}>(2 à 6)</span></div>
           {editState.players.map((name,i)=>(
             <PlayerEditRow key={i} name={name} index={i}
+              suggestions={knownPlayers} exclude={editState.players}
               onChange={v=>setEditState(s=>{const p=[...s.players];p[i]=v;return{...s,players:p};})}
               onRemove={()=>setEditState(s=>({...s,players:s.players.filter((_,j)=>j!==i)}))}
               canRemove={editState.players.length>2}/>
@@ -390,6 +392,7 @@ export function GameApp({ gameId, onBack }) {
           <div style={S.sLabel}>Joueurs <span style={{color:G.sub}}>(2 à 6)</span></div>
           {quickState.players.map((name,i)=>(
             <PlayerEditRow key={i} name={name} index={i}
+              suggestions={knownPlayers} exclude={quickState.players}
               onChange={v=>setQuickState(s=>{const p=[...s.players];p[i]=v;return{...s,players:p};})}
               onRemove={()=>setQuickState(s=>({...s,players:s.players.filter((_,j)=>j!==i)}))}
               canRemove={quickState.players.length>2}/>
