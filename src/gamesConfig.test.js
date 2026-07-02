@@ -76,6 +76,40 @@ describe('GAMES -- winMode correct pour chaque jeu', () => {
   it('barbu: highest (scores negatifs, le moins negatif gagne)', () => { expect(GAMES.barbu.winMode).toBe('highest') })
 })
 
+describe('GAMES -- sideBadges (badges latéraux pilotés par la config)', () => {
+  it('flip7 : deux toggles (flip7 puis flip7dbl)', () => {
+    const b = GAMES.flip7.sideBadges
+    expect(b.map(x => [x.type, x.field])).toEqual([['toggle', 'flip7'], ['toggle', 'flip7dbl']])
+  })
+  it('skyjo : un toggle doubled', () => {
+    const b = GAMES.skyjo.sideBadges
+    expect(b).toHaveLength(1)
+    expect(b[0].type).toBe('toggle')
+    expect(b[0].field).toBe('doubled')
+  })
+  it('qwirkle : un badge add de +12 (double qwirkle)', () => {
+    const b = GAMES.qwirkle.sideBadges
+    expect(b).toHaveLength(1)
+    expect(b[0].type).toBe('add')
+    expect(b[0].value).toBe(12)
+  })
+  it('les toggles ciblent des champs initialisés par makeActiveGame', () => {
+    // chaque field de toggle doit exister dans le schéma du jeu (sinon crash au tap)
+    for (const [gid, G] of Object.entries(GAMES)) {
+      for (const b of G.sideBadges || []) {
+        if (b.type !== 'toggle') continue
+        expect(['flip7', 'flip7dbl', 'doubled']).toContain(b.field)
+        expect(['flip7', 'skyjo']).toContain(gid)
+      }
+    }
+  })
+  it('odin, rdn, terraforming, harmonies, barbu : pas de sideBadges', () => {
+    for (const gid of ['odin', 'rdn', 'terraforming', 'harmonies', 'barbu']) {
+      expect(GAMES[gid].sideBadges).toBeUndefined()
+    }
+  })
+})
+
 describe('GAMES -- Barbu', () => {
   const B = GAMES.barbu
   const contracts = B.contracts

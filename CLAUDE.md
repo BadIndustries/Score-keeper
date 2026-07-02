@@ -23,10 +23,15 @@ src/
   storage.js           — localStorage : loadData, saveGroups, saveActiveGame
   App.jsx              — routeur top-level (GameSelector → GameApp | WhoStartsApp)
   screens/
-    GameApp.jsx        — écran principal jeu (1 200 lignes, gère tous les jeux)
+    GameApp.jsx        — orchestration jeu (~700 lignes : données, navigation, victoire, overlays)
+    boards/
+      ClassicBoard.jsx   — moteur « manches » (Odin, Flip 7, Skyjo, RdN, Qwirkle)
+      SheetBoard.jsx     — moteur « feuille de score » wizard (TM, Harmonies) — tmStep local
+      ContractsBoard.jsx — moteur « contrats » (Barbu) — contractDraft local
     GameSelector.jsx   — sélecteur de jeu
     WhoStartsApp.jsx   — mini-app "doigts sur l'écran" pour désigner qui commence
-  ui.jsx               — composants partagés (Btn, LimitCtrl, PlayerEditRow, GIcon)
+  ui.jsx               — composants partagés (Btn, LimitCtrl, PlayerEditRow, GIcon, BottomSheet)
+  usePressRepeat.js    — hook appui long (répétition 80ms après 400ms, cleanup au démontage)
   GameIcons.jsx        — icônes SVG inline
   changelog.js         — GÉNÉRÉ (scripts/gen-changelog.cjs) — journal des versions (À propos → Nouveautés)
   UpdatePrompt.jsx     — popup auto « nouvelle version » (vite-plugin-pwa, mode prompt)
@@ -79,6 +84,16 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 ### Persistance & migration
 - `normalizeActiveGame(gameId, ag)` (gameLogic) est appelé par `loadActiveGame` : garantit que tous les tableaux du schéma du jeu existent (parties legacy sans `doubled`/`flip7`/`tmScores` → plus de crash). Retourne `null` si inexploitable
 - `persist` lève en cas de quota plein → `setSaveError(true)` affiche une bannière rouge (échec non silencieux)
+
+### Badges latéraux (ClassicBoard)
+- `G.sideBadges[]` dans games.config : `{ type:"toggle", field, emoji, label, activeLabel, activeColor, activeBg, activeBorder }` ou `{ type:"add", value, emoji, label }`
+- `toggle` bascule `activeGame[field][i]` (le champ doit être initialisé par `makeActiveGame`/`normalizeActiveGame`) ; `add` appelle `adjustScore(i, value)`
+- Plus aucune branche `gameId===` pour les badges — tout vient de la config
+
+### Overlays (BottomSheet)
+- `<BottomSheet title onClose maxHeight zIndex G headerExtra>` (ui.jsx) : backdrop, poignée, header + ✕
+- Avec `G` : thème du jeu ; sans : thème neutre sombre (GameSelector)
+- Le children gère son propre scroll (`{ overflowY:"auto", flex:1 }`)
 
 ### Multi-touch (WhoStartsApp)
 - `fDebounceRef` (300ms) pour laisser le temps aux doigts successifs d'arriver

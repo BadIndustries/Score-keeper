@@ -57,6 +57,12 @@ export const GAMES = {
     limitMin: 50, limitMax: 500, limitStep: 50,
     goalKey: "goal",
     winMode: "highest",
+    sideBadges: [
+      { type: "toggle", field: "flip7", emoji: "🃏", label: "Flip7", activeLabel: "Flip7 +15",
+        activeColor: "#f6c90e", activeBg: "rgba(246,201,14,.15)", activeBorder: "rgba(246,201,14,.5)", minWidth: 62 },
+      { type: "toggle", field: "flip7dbl", emoji: "✕2", label: "Double", activeLabel: "Doublé",
+        activeColor: "#f87171", activeBg: "rgba(239,68,68,.18)", activeBorder: "rgba(239,68,68,.6)", minWidth: 58 },
+    ],
   },
   skyjo: {
     key: KEY_SKYJO,
@@ -81,6 +87,10 @@ export const GAMES = {
     goalKey: "limit",
     winMode: "lowest",
     hasDouble: true,
+    sideBadges: [
+      { type: "toggle", field: "doubled", emoji: "✕2", label: "Double", activeLabel: "Doublé",
+        activeColor: "#f87171", activeBg: "rgba(239,68,68,.18)", activeBorder: "rgba(239,68,68,.6)", minWidth: 58 },
+    ],
   },
   rdn: {
     key: KEY_RDN,
@@ -128,6 +138,9 @@ export const GAMES = {
     goalKey: "goal",
     winMode: "highest",
     endOnDemand: true,
+    sideBadges: [
+      { type: "add", value: 12, emoji: "🎯", label: "+12", minWidth: 58 },
+    ],
   },
   terraforming: {
     key: KEY_TM,

@@ -10,9 +10,7 @@ export function ClassicBoard({ g, G, gameId, S, gameGroupName, roundNum, roundLa
   const [directEdit, setDirectEdit] = useState(null);
   const [directVal,  setDirectVal]  = useState("");
 
-  function toggleFlip7(i){ update(a=>{a.activeGame.flip7[i]=!a.activeGame.flip7[i];return a;}); }
-  function toggleFlip7Dbl(i){ update(a=>{a.activeGame.flip7dbl[i]=!a.activeGame.flip7dbl[i];return a;}); }
-  function toggleDouble(i){ update(a=>{a.activeGame.doubled[i]=!a.activeGame.doubled[i];return a;}); }
+  function toggleField(field,i){ update(a=>{a.activeGame[field][i]=!a.activeGame[field][i];return a;}); }
 
   function applyDirect(i) {
     const v = parseInt(directVal, 10);
@@ -113,54 +111,32 @@ export function ClassicBoard({ g, G, gameId, S, gameGroupName, roundNum, roundLa
                     ))}
                   </div>
                 </div>
-                {gameId==="flip7" && (
-                  <div onClick={()=>toggleFlip7(i)}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                    background:f7?"rgba(246,201,14,.15)":G.surface2,
-                    border:`1px solid ${f7?"rgba(246,201,14,.5)":G.border}`,
-                    borderRadius:10,padding:"5px 10px",cursor:"pointer",flexShrink:0,minWidth:62}}>
-                    <span style={{fontSize:"1rem"}}>🃏</span>
-                    <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
-                      color:f7?"#f6c90e":G.sub,fontWeight:f7?700:400}}>Flip7{f7?" +15":""}</span>
-                  </div>
-                )}
-                {gameId==="flip7" && (
-                  <div onClick={()=>toggleFlip7Dbl(i)}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                    background:f7dbl?"rgba(239,68,68,.18)":G.surface2,
-                    border:`1px solid ${f7dbl?"rgba(239,68,68,.6)":G.border}`,
-                    borderRadius:10,padding:"5px 8px",cursor:"pointer",flexShrink:0,minWidth:58}}>
-                    <span style={{fontSize:"1rem"}}>✕2</span>
-                    <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
-                      color:f7dbl?"#f87171":G.sub,fontWeight:f7dbl?700:400}}>
-                      {f7dbl?"Doublé":"Double"}
-                    </span>
-                  </div>
-                )}
-                {gameId==="skyjo" && (
-                  <div onClick={()=>toggleDouble(i)}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                    background:doubled?"rgba(239,68,68,.18)":G.surface2,
-                    border:`1px solid ${doubled?"rgba(239,68,68,.6)":G.border}`,
-                    borderRadius:10,padding:"5px 8px",cursor:"pointer",flexShrink:0,minWidth:58}}>
-                    <span style={{fontSize:"1rem"}}>✕2</span>
-                    <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
-                      color:doubled?"#f87171":G.sub,fontWeight:doubled?700:400}}>
-                      {doubled?"Doublé":"Double"}
-                    </span>
-                  </div>
-                )}
-                {gameId==="qwirkle" && (
-                  <div onClick={()=>adjustScore(i,12)}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
-                    background:G.surface2,
-                    border:`1px solid ${G.border}`,
-                    borderRadius:10,padding:"5px 10px",cursor:"pointer",flexShrink:0,minWidth:58}}>
-                    <span style={{fontSize:"1rem"}}>🎯</span>
-                    <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
-                      color:G.sub,fontWeight:700}}>+12</span>
-                  </div>
-                )}
+                {(G.sideBadges||[]).map(b=>{
+                  if(b.type==="add") return (
+                    <div key={b.label} onClick={()=>adjustScore(i,b.value)}
+                      style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                      background:G.surface2,border:`1px solid ${G.border}`,
+                      borderRadius:10,padding:"5px 8px",cursor:"pointer",flexShrink:0,minWidth:b.minWidth||58}}>
+                      <span style={{fontSize:"1rem"}}>{b.emoji}</span>
+                      <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
+                        color:G.sub,fontWeight:700}}>{b.label}</span>
+                    </div>
+                  );
+                  const active=g[b.field]?.[i]||false;
+                  return (
+                    <div key={b.field} onClick={()=>toggleField(b.field,i)}
+                      style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                      background:active?b.activeBg:G.surface2,
+                      border:`1px solid ${active?b.activeBorder:G.border}`,
+                      borderRadius:10,padding:"5px 8px",cursor:"pointer",flexShrink:0,minWidth:b.minWidth||58}}>
+                      <span style={{fontSize:"1rem"}}>{b.emoji}</span>
+                      <span style={{fontSize:".5rem",letterSpacing:".06em",textTransform:"uppercase",
+                        color:active?b.activeColor:G.sub,fontWeight:active?700:400}}>
+                        {active?(b.activeLabel||b.label):b.label}
+                      </span>
+                    </div>
+                  );
+                })}
                 <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0,minWidth:44}}>
                   <div style={{fontFamily:"'Cinzel',serif",fontSize:"1rem",fontWeight:700,lineHeight:1,
                     color:f7dbl?"#f87171":doubled?"#f87171":f7?"#f6c90e":G.accent}}>
