@@ -53,20 +53,23 @@ export function PlayerEditRow({ name, index, onChange, onRemove, canRemove, sugg
         <input type="text" placeholder={`Joueur ${index+1}`} maxLength={16} value={name}
           onChange={e=>onChange(e.target.value)}
           onFocus={()=>setFocused(true)}
-          onBlur={()=>setTimeout(()=>setFocused(false), 150)}
-          style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"inherit", fontFamily:"inherit", fontSize:".9rem" }}/>
+          onBlur={()=>setTimeout(()=>setFocused(false), 250)}
+          style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"inherit", fontFamily:"inherit",
+            fontSize:16, minWidth:0 }}/>{/* ≥16px : évite le zoom auto d'iOS Safari au focus */}
         {canRemove && <button onClick={onRemove} aria-label="Retirer le joueur" style={{ background:"none", border:"none", color:"rgba(255,255,255,.4)", fontSize:"1.1rem", cursor:"pointer", width:36, height:36, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>}
       </div>
       {list.length > 0 && (
         <div style={{ position:"absolute", top:"calc(100% + 3px)", left:0, right:0, zIndex:30,
           background:"#1c1b26", border:"1px solid rgba(255,255,255,.14)", borderRadius:10,
-          boxShadow:"0 8px 24px rgba(0,0,0,.55)", overflow:"hidden" }}>
+          boxShadow:"0 8px 24px rgba(0,0,0,.55)", overflowY:"auto", maxHeight:210,
+          WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
+          {/* Sélection au click (pas au pointerdown) : un glissé de scroll ne choisit rien. */}
           {list.map(s=>(
             <div key={s}
-              onPointerDown={e=>{ e.preventDefault(); onChange(s); setFocused(false); }}
+              onClick={()=>{ onChange(s); setFocused(false); }}
               style={{ display:"flex", alignItems:"center", gap:8, padding:"11px 12px", cursor:"pointer",
                 fontSize:".85rem", color:"rgba(255,255,255,.85)",
-                borderBottom:"1px solid rgba(255,255,255,.06)" }}>
+                borderBottom:"1px solid rgba(255,255,255,.06)", userSelect:"none" }}>
               <span style={{ fontSize:".8rem", opacity:.6 }}>👤</span>{s}
             </div>
           ))}
