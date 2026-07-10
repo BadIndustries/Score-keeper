@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, reussiteRankRewards, medalRank, makeWinSnapshot, collectKnownPlayers, filterByPeriod } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, reussiteRankRewards, medalRank, makeWinSnapshot, collectKnownPlayers, filterByPeriod, recordCampaign } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow, BottomSheet, PeriodChips } from '../ui.jsx';
 import { ClassicBoard } from './boards/ClassicBoard.jsx';
 import { SheetBoard } from './boards/SheetBoard.jsx';
 import { ContractsBoard } from './boards/ContractsBoard.jsx';
+import { ProgressBoard } from './boards/ProgressBoard.jsx';
 
 export function GameApp({ gameId, onBack }) {
   const G = GAMES[gameId];
@@ -233,6 +234,20 @@ export function GameApp({ gameId, onBack }) {
     setShowWin(true);
   }
 
+  // Take Time : archive la campagne terminée (victoire d'équipe) et libère le groupe.
+  function archiveCampaign(){
+    update(a=>{
+      const ag=a.activeGame;
+      if(ag.groupId){
+        const grp=a.groups.find(x=>x.id===ag.groupId);
+        if(grp) recordCampaign(grp, gameId, ag);
+      }
+      a.activeGame=null;
+      return a;
+    });
+    setScreen("home");
+  }
+
   function shareResult() {
     if (!winSnapshot) return;
     const { players, totals, winners, roundNum: wRN, roundLabel: wRL } = winSnapshot;
@@ -437,6 +452,10 @@ export function GameApp({ gameId, onBack }) {
           roundNum={roundNum} getRankIcon={getRankIcon} update={update}
           setSheet={setSheet} goHome={goHome} finDePartie={finDePartie}/>}
 
+      {screen==="game" && g && G.scoreType==="progress" &&
+        <ProgressBoard g={g} G={G} S={S} gameGroupName={gameGroupName}
+          update={update} goHome={goHome} archiveCampaign={archiveCampaign}/>}
+
       {/* ── SHEET: HISTORY ── */}
       {sheet==="history" && g && (
         <BottomSheet title="📜 Historique" G={G} maxHeight="78%" onClose={()=>setSheet(null)}>
@@ -557,7 +576,7 @@ export function GameApp({ gameId, onBack }) {
                           </div>
                           <div style={{flexShrink:0,textAlign:"right"}}>
                             <div style={{fontSize:".65rem",color:G.sub}}>{ds}</div>
-                            <div style={{fontSize:".63rem",color:G.sub}}>{pg.rounds} tour{pg.rounds>1?"s":""}</div>
+                            <div style={{fontSize:".63rem",color:G.sub}}>{pg.rounds} {pg.roundsLabel||"tour"}{pg.rounds>1?"s":""}</div>
                           </div>
                         </div>
                       );

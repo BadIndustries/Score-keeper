@@ -9,7 +9,7 @@
 
 PWA mobile-first de comptage de points pour jeux de société. React 19 + Vite 8 + vitest. Déployée sur GitHub Pages (`badindustries/score-keeper`, branche `main`).
 
-**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies · Barbu · Mythologies
+**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies · Barbu · Mythologies · Take Time (coop)
 
 ---
 
@@ -28,6 +28,7 @@ src/
       ClassicBoard.jsx   — moteur « manches » (Odin, Flip 7, Skyjo, RdN, Qwirkle)
       SheetBoard.jsx     — moteur « feuille de score » wizard (TM, Harmonies) — tmStep local
       ContractsBoard.jsx — moteur « contrats » (Barbu) — contractDraft local
+      ProgressBoard.jsx  — moteur « progression » coop (Take Time) — sans score
     GameSelector.jsx   — sélecteur de jeu
     WhoStartsApp.jsx   — mini-app "doigts sur l'écran" pour désigner qui commence
   ui.jsx               — composants partagés (Btn, LimitCtrl, PlayerEditRow, GIcon, BottomSheet)
@@ -71,6 +72,14 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 - Réussite = `mode: "rank"` + `rankStep` : sélecteur de classement, +rankStep par joueur battu (`reussiteRankRewards(n, step)` → ex `[45,30,15,0]`)
 - Salade = un contrat à 5 composants (plis/cœurs/dames/barbu/derniers), parcouru en wizard comme les étapes TM
 - L'écran utilise un `contractDraft` local `{ key, step, counts }` ; à la validation : push dans `history` `{contract, scores}`, cumul dans `totals`, `tour/manche = history.length`
+
+### Jeu coopératif à progression (Take Time)
+- `G.scoreType === "progress"` + `G.coop: true` + `chapters`/`clocksPerChapter` dans la config
+- `activeGame.clocks` : tableau de `{ tries, done }` (chapters × clocksPerChapter entrées), initialisé par `makeActiveGame`, garanti par `normalizeActiveGame`
+- `campaignStats(clocks)` → `{ done, total, tries, currentIndex }` (currentIndex = première horloge non réussie, -1 si campagne finie)
+- Boutons « Raté » (+1 tries) / « Réussie » (+1 tries, done=true) sur l'horloge courante ; tap sur une horloge réussie = la remettre en jeu
+- `recordCampaign(grp, gameId, ag)` : archive coop — `winners` = toute l'équipe, `rounds` = total tentatives, `roundsLabel: "tentative"` (les historiques affichent `pg.roundsLabel||"tour"`)
+- Pas de win screen classique : le board affiche son panneau 🎉 + bouton « Archiver la campagne »
 
 ### Gestion de victoire
 - `isGameOver(totals, limit)` : `Math.max(...totals) >= limit` — déclenche quand

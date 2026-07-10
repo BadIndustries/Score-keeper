@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod, campaignStats, recordCampaign } from './gameLogic.js'
 import { GAMES } from './games.config.js'
 
 describe('computeTourScores', () => {
@@ -580,5 +580,61 @@ describe('filterByPeriod (filtre historique/stats)', () => {
     expect(filterByPeriod(games, 'inconnu', now)).toHaveLength(5)
     expect(filterByPeriod(undefined, '7d', now)).toEqual([])
     expect(filterByPeriod(undefined, 'all', now)).toEqual([])
+  })
+})
+
+describe('Take Time — campagne cooperative', () => {
+  it('makeActiveGame initialise 40 horloges vierges', () => {
+    const ag = makeActiveGame('taketime', 'g1', ['Alice', 'Bob'], 999)
+    expect(ag.clocks).toHaveLength(40)
+    expect(ag.clocks[0]).toEqual({ tries: 0, done: false })
+  })
+
+  it('campaignStats : compte reussites, tentatives et horloge en cours', () => {
+    const clocks = [
+      { tries: 1, done: true },
+      { tries: 3, done: true },
+      { tries: 2, done: false },
+      { tries: 0, done: false },
+    ]
+    expect(campaignStats(clocks)).toEqual({ done: 2, total: 4, tries: 6, currentIndex: 2 })
+  })
+
+  it('campaignStats : campagne terminee → currentIndex -1', () => {
+    const clocks = [{ tries: 1, done: true }, { tries: 2, done: true }]
+    expect(campaignStats(clocks).currentIndex).toBe(-1)
+  })
+
+  it('campaignStats : liste absente ne crash pas', () => {
+    expect(campaignStats(undefined)).toEqual({ done: 0, total: 0, tries: 0, currentIndex: -1 })
+  })
+
+  it('normalizeActiveGame : campagne legacy sans clocks → 40 horloges vierges', () => {
+    const ag = normalizeActiveGame('taketime', { players: ['A', 'B'] })
+    expect(ag.clocks).toHaveLength(40)
+    expect(ag.clocks[39]).toEqual({ tries: 0, done: false })
+  })
+
+  it('normalizeActiveGame : clocks partiels completes en preservant l existant', () => {
+    const ag = normalizeActiveGame('taketime', { players: ['A'], clocks: [{ tries: 5, done: true }] })
+    expect(ag.clocks).toHaveLength(40)
+    expect(ag.clocks[0]).toEqual({ tries: 5, done: true })
+    expect(ag.clocks[1]).toEqual({ tries: 0, done: false })
+  })
+
+  it('recordCampaign : victoire d equipe — tous gagnants, rounds = tentatives', () => {
+    const grp = { pastGames: [] }
+    const ag = {
+      players: ['Alice', 'Bob'],
+      startedAt: '2026-07-10T10:00:00.000Z',
+      clocks: [{ tries: 2, done: true }, { tries: 3, done: true }],
+    }
+    recordCampaign(grp, 'taketime', ag)
+    const pg = grp.pastGames[0]
+    expect(pg.coop).toBe(true)
+    expect(pg.winners).toEqual(['Alice', 'Bob'])
+    expect(pg.winner).toBe('Alice, Bob')
+    expect(pg.rounds).toBe(5)
+    expect(pg.roundsLabel).toBe('tentative')
   })
 })

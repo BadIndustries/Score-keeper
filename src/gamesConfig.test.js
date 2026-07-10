@@ -143,6 +143,22 @@ describe('GAMES -- Mythologies', () => {
   })
 })
 
+describe('GAMES -- Take Time', () => {
+  const T = GAMES.taketime
+  it('cooperatif a progression : progress, coop, endOnDemand', () => {
+    expect(T.scoreType).toBe('progress')
+    expect(T.coop).toBe(true)
+    expect(T.endOnDemand).toBe(true)
+  })
+  it('campagne : 10 chapitres de 4 horloges', () => {
+    expect(T.chapters).toBe(10)
+    expect(T.clocksPerChapter).toBe(4)
+  })
+  it('DEFAULT_LIMITS contient taketime', () => {
+    expect(DEFAULT_LIMITS.taketime).toBe(999)
+  })
+})
+
 describe('GAMES -- Barbu', () => {
   const B = GAMES.barbu
   const contracts = B.contracts

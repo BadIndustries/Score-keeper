@@ -7,6 +7,7 @@ export const KEY_TM     = "tm-v1";
 export const KEY_HARMONIES = "harmonies-v1";
 export const KEY_BARBU  = "barbu-v1";
 export const KEY_MYTHOLOGIES = "mythologies-v1";
+export const KEY_TAKETIME = "taketime-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -290,6 +291,33 @@ export const GAMES = {
       { key: "gemmes",    label: "Gemmes",         emoji: "💎", default: 0, divideBy: 3, hint: "Gemmes restantes — 3 gemmes = 1 Faveur (l'app convertit)" },
     ],
   },
+  taketime: {
+    key: KEY_TAKETIME,
+    label: "Take Time",
+    emoji: "\u23F0",
+    color: "#e8615c",
+    colorDim: "rgba(232,97,92,.14)",
+    border: "#3d1a18",
+    surface: "#241110",
+    surface2: "#2f1614",
+    bg: "#160a09",
+    text: "#f8e9e7",
+    sub: "#a4726d",
+    accent: "#ff9d96",
+    btnBg: "#e8615c",
+    btnColor: "#160a09",
+    desc: "Coop\u00e9ratif \u2014 pas de score\nCampagne : 10 chapitres \u00d7 4 horloges",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "progress",
+    coop: true,
+    chapters: 10,
+    clocksPerChapter: 4,
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999, taketime: 999 };

@@ -373,7 +373,7 @@ export function GameSelector({ onSelect }) {
                           </div>
                           <div style={{flexShrink:0,textAlign:"right"}}>
                             <div style={{fontSize:".6rem",color:"rgba(255,255,255,.3)"}}>{ds}</div>
-                            <div style={{fontSize:".58rem",color:"rgba(255,255,255,.2)"}}>{pg.rounds} tour{pg.rounds>1?"s":""}</div>
+                            <div style={{fontSize:".58rem",color:"rgba(255,255,255,.2)"}}>{pg.rounds} {pg.roundsLabel||"tour"}{pg.rounds>1?"s":""}</div>
                           </div>
                         </div>
                       );

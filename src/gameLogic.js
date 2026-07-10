@@ -13,6 +13,10 @@ export function makeActiveGame(gameId, groupId, players, limit) {
     current: players.map(() => 0),
     ...(gameId === 'flip7' ? { flip7: players.map(() => false), flip7dbl: players.map(() => false) } : {}),
     ...(gameId === 'skyjo' ? { doubled: players.map(() => false) } : {}),
+    ...(GAMES[gameId]?.scoreType === 'progress'
+      ? { clocks: Array.from({ length: (GAMES[gameId].chapters || 10) * (GAMES[gameId].clocksPerChapter || 4) },
+          () => ({ tries: 0, done: false })) }
+      : {}),
     history: [],
     startedAt: new Date().toISOString(),
   };
@@ -106,6 +110,34 @@ export function medalRank(score, totals, winMode) {
   return (totals || []).filter(t => (winMode === 'lowest' ? t < score : t > score)).length;
 }
 
+// Take Time — état d'une campagne : horloges réussies, tentatives cumulées,
+// index de l'horloge en cours (-1 si campagne terminée).
+export function campaignStats(clocks) {
+  const list = clocks || [];
+  const done = list.filter(c => c?.done).length;
+  const tries = list.reduce((s, c) => s + (c?.tries || 0), 0);
+  const currentIndex = list.findIndex(c => !c?.done);
+  return { done, total: list.length, tries, currentIndex };
+}
+
+// Archive une campagne coopérative terminée : victoire d'équipe (tous gagnants),
+// rounds = total de tentatives (roundsLabel adapte l'affichage de l'historique).
+export function recordCampaign(grp, gameId, ag) {
+  if (!grp.pastGames) grp.pastGames = [];
+  const { tries } = campaignStats(ag.clocks);
+  grp.pastGames.unshift({
+    gameId,
+    coop: true,
+    date: ag.startedAt,
+    rounds: tries,
+    roundsLabel: 'tentative',
+    winner: ag.players.join(', '),
+    winners: [...ag.players],
+    scores: ag.players.map(name => ({ name, score: tries })),
+  });
+  return grp;
+}
+
 // Filtre des parties passées par période glissante.
 // period : "all" | "today" | "7d" | "30d" — now injectable pour les tests.
 export function filterByPeriod(pastGames, period, now = new Date()) {
@@ -162,6 +194,12 @@ export function normalizeActiveGame(gameId, ag) {
   ag.manche = Number.isFinite(ag.manche) ? ag.manche : 1;
   if (gameId === 'flip7') { ag.flip7 = fill(ag.flip7, false); ag.flip7dbl = fill(ag.flip7dbl, false); }
   if (gameId === 'skyjo') { ag.doubled = fill(ag.doubled, false); }
+  if (G.scoreType === 'progress') {
+    const total = (G.chapters || 10) * (G.clocksPerChapter || 4);
+    const list = Array.isArray(ag.clocks) ? ag.clocks.slice(0, total) : [];
+    while (list.length < total) list.push({ tries: 0, done: false });
+    ag.clocks = list.map(c => ({ tries: Number.isFinite(c?.tries) ? c.tries : 0, done: !!c?.done }));
+  }
   if (G.scoreType === 'sheet') {
     ag.tmExtensions = (ag.tmExtensions && typeof ag.tmExtensions === 'object') ? ag.tmExtensions : {};
     const fields = tmGetAllFields(G, ag.tmExtensions);
