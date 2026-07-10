@@ -78,7 +78,7 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 - `getWinnerIndex(totals, winMode)` : index du gagnant
 - `medalRank(score, totals, winMode)` : rang « compétition » (ex æquo = même médaille). À utiliser PARTOUT pour les médailles (jamais l'index de position)
 - `makeWinSnapshot(ag, G, gameId, totalsOverride?)` : construit le snapshot du gagnant (figé AVANT que `update()` ne vide `activeGame`). `totalsOverride` pour validerRound ; sinon recalcule les totaux feuille. Évite la divergence validerRound/finDePartie
-- `recordPastGame(grp, gameId, ag, winMode)` : enregistre dans `grp.pastGames` (max 20)
+- `recordPastGame(grp, gameId, ag, winMode)` : enregistre dans `grp.pastGames` (sans plafond — historique complet pour les stats)
   → le champ `pg.winners` est un tableau ; `pg.winner` est une chaîne (peut être "A, B" pour ex aequo)
   → pour les stats, toujours utiliser `pg.winners?.includes(name) || name === pg.winner`
 

@@ -189,11 +189,12 @@ describe('recordPastGame', () => {
     expect(grp.pastGames[1].gameId).toBe('old')
   })
 
-  it('limite a 20 parties', () => {
-    const grp = { pastGames: Array.from({ length: 20 }, (_, i) => ({ gameId: 'x', i })) }
+  it('pas de plafond : tout l historique est conserve (stats longue periode)', () => {
+    const grp = { pastGames: Array.from({ length: 200 }, (_, i) => ({ gameId: 'x', i })) }
     recordPastGame(grp, 'flip7', makeAg(['Alice', 'Bob'], [200, 100]), 'highest')
-    expect(grp.pastGames).toHaveLength(20)
+    expect(grp.pastGames).toHaveLength(201)
     expect(grp.pastGames[0].gameId).toBe('flip7')
+    expect(grp.pastGames[200].i).toBe(199) // la plus ancienne est toujours la
   })
 
   it('utilise manche si tour est undefined', () => {

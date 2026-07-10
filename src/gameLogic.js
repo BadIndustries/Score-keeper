@@ -56,7 +56,8 @@ export function recordPastGame(grp, gameId, ag, winMode) {
     winners,
     scores: ag.players.map((name, i) => ({ name, score: ag.totals[i] })),
   });
-  if (grp.pastGames.length > 20) grp.pastGames = grp.pastGames.slice(0, 20);
+  // Pas de plafond : tout l'historique est conservé (stats sur longue période).
+  // Une partie ≈ 300 octets — le quota localStorage est surveillé par persist().
   return grp;
 }
 
