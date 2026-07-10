@@ -1,29 +1,17 @@
 import { useState } from "react";
-import { GAMES, MEDALS, KEY_GROUPS } from '../games.config.js';
-import { saveGroups, loadGroups } from '../storage.js';
-import { GIcon, MIN_PLAYERS, BottomSheet, PeriodChips } from '../ui.jsx';
-import { medalRank, filterByPeriod } from '../gameLogic.js';
+import { GAMES, KEY_GROUPS } from '../games.config.js';
+import { saveGroups } from '../storage.js';
+import { GIcon, MIN_PLAYERS, BottomSheet } from '../ui.jsx';
 import { CHANGELOG } from '../changelog.js';
 
 // ── SELECTOR SCREEN ───────────────────────────────────────────────────
 export function GameSelector({ onSelect }) {
-  const [showHistory,  setShowHistory]  = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [showInstall, setShowInstall] = useState(false);
-  const [histPeriod, setHistPeriod] = useState("all");
   const [importMsg,    setImportMsg]    = useState(null);
   const [updateMsg,    setUpdateMsg]    = useState(null);
   const [updating,     setUpdating]     = useState(false);
-  const [groups]                        = useState(() => loadGroups());
-
-  const allHistory = () => {
-    const entries = [];
-    groups.forEach(grp => {
-      (grp.pastGames||[]).forEach(pg => entries.push({ ...pg, groupName: grp.name }));
-    });
-    return entries.sort((a,b) => new Date(b.date) - new Date(a.date));
-  };
 
   async function checkUpdate() {
     setUpdating(true); setUpdateMsg(null);
@@ -125,7 +113,7 @@ export function GameSelector({ onSelect }) {
           boxShadow:"0 4px 24px rgba(0,0,0,.45)",backdropFilter:"blur(8px)"}}>
           ℹ️ À propos
         </div>
-        <div onClick={()=>setShowHistory(true)} style={{pointerEvents:"auto",
+        <div onClick={()=>onSelect("history")} style={{pointerEvents:"auto",
           background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.14)",
           borderRadius:28,padding:"11px 20px",fontSize:".75rem",color:"rgba(255,255,255,.65)",
           cursor:"pointer",display:"flex",alignItems:"center",gap:7,letterSpacing:".05em",
@@ -341,48 +329,6 @@ export function GameSelector({ onSelect }) {
         </BottomSheet>
       )}
 
-      {/* ── HISTORY OVERLAY ── */}
-      {showHistory && (()=>{
-        const history = filterByPeriod(allHistory(), histPeriod);
-        return (
-          <BottomSheet title="📋 Toutes les parties" maxHeight="82%" zIndex={50} onClose={()=>setShowHistory(false)}>
-              <PeriodChips value={histPeriod} onChange={setHistPeriod}/>
-              <div style={{fontSize:".62rem",color:"rgba(255,255,255,.35)",padding:"6px 16px 0",flexShrink:0}}>
-                {history.length} partie{history.length>1?"s":""}{histPeriod!=="all"?" sur la période":""}
-              </div>
-              <div style={{overflowY:"auto",flex:1,padding:"8px 14px 24px"}}>
-                {history.length===0
-                  ? <div style={{color:"rgba(255,255,255,.3)",textAlign:"center",padding:30,fontSize:".85rem"}}>
-                      {histPeriod==="all"?"Aucune partie enregistrée":"Aucune partie sur cette période"}</div>
-                  : history.map((pg,i)=>{
-                      const pgGame = GAMES[pg.gameId];
-                      const ds = new Date(pg.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
-                      const sorted = [...pg.scores].sort((a,b)=> pgGame?.winMode==="lowest" ? a.score-b.score : b.score-a.score);
-                      const pgTotals = pg.scores.map(x=>x.score);
-                      return (
-                        <div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.05)",display:"flex",alignItems:"flex-start",gap:10}}>
-                          <div style={{fontSize:"1.3rem",flexShrink:0,marginTop:2}}>{pgGame?.emoji||"🎮"}</div>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                              <span style={{fontFamily:"'Cinzel',serif",fontSize:".82rem",color:pgGame?.accent||"#fff",fontWeight:700}}>🏆 {pg.winner}</span>
-                              <span style={{fontSize:".62rem",color:"rgba(255,255,255,.25)",background:"rgba(255,255,255,.06)",borderRadius:4,padding:"2px 6px"}}>{pg.groupName}</span>
-                            </div>
-                            <div style={{fontSize:".63rem",color:"rgba(255,255,255,.35)",lineHeight:1.6}}>
-                              {sorted.map((s)=>`${MEDALS[medalRank(s.score, pgTotals, pgGame?.winMode)]} ${s.name} ${s.score}pts`).join(" · ")}
-                            </div>
-                          </div>
-                          <div style={{flexShrink:0,textAlign:"right"}}>
-                            <div style={{fontSize:".6rem",color:"rgba(255,255,255,.3)"}}>{ds}</div>
-                            <div style={{fontSize:".58rem",color:"rgba(255,255,255,.2)"}}>{pg.rounds} {pg.roundsLabel||"tour"}{pg.rounds>1?"s":""}</div>
-                          </div>
-                        </div>
-                      );
-                    })
-                }
-              </div>
-          </BottomSheet>
-        );
-      })()}
     </div>
   );
 }

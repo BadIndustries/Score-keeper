@@ -138,6 +138,20 @@ export function recordCampaign(grp, gameId, ag) {
   return grp;
 }
 
+// Stats joueurs sur une liste de parties (déjà filtrée) : parties jouées,
+// victoires, % — triées par victoires décroissantes.
+export function computeHistoryStats(entries) {
+  const players = {};
+  (entries || []).forEach(pg => (pg.scores || []).forEach(s => {
+    if (!players[s.name]) players[s.name] = { games: 0, wins: 0 };
+    players[s.name].games++;
+    if (pg.winners?.includes(s.name) || s.name === pg.winner) players[s.name].wins++;
+  }));
+  return Object.entries(players)
+    .map(([name, st]) => ({ name, ...st, pct: Math.round(st.wins / st.games * 100) }))
+    .sort((a, b) => b.wins - a.wins || b.pct - a.pct);
+}
+
 // Filtre des parties passées par période glissante.
 // period : "all" | "today" | "7d" | "30d" — now injectable pour les tests.
 export function filterByPeriod(pastGames, period, now = new Date()) {

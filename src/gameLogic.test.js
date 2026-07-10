@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod, campaignStats, recordCampaign } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod, campaignStats, recordCampaign, computeHistoryStats } from './gameLogic.js'
 import { GAMES } from './games.config.js'
 
 describe('computeTourScores', () => {
@@ -636,5 +636,37 @@ describe('Take Time — campagne cooperative', () => {
     expect(pg.winner).toBe('Alice, Bob')
     expect(pg.rounds).toBe(5)
     expect(pg.roundsLabel).toBe('tentative')
+  })
+})
+
+describe('computeHistoryStats (ecran Historique & stats)', () => {
+  const entries = [
+    { winner: 'Alice', winners: ['Alice'], scores: [{ name: 'Alice', score: 10 }, { name: 'Bob', score: 5 }] },
+    { winner: 'Bob',   winners: ['Bob'],   scores: [{ name: 'Alice', score: 3 }, { name: 'Bob', score: 12 }] },
+    { winner: 'Alice', winners: ['Alice'], scores: [{ name: 'Alice', score: 8 }, { name: 'Carol', score: 2 }] },
+  ]
+
+  it('compte parties, victoires et % par joueur, trie par victoires', () => {
+    const stats = computeHistoryStats(entries)
+    expect(stats[0]).toEqual({ name: 'Alice', games: 3, wins: 2, pct: 67 })
+    expect(stats[1]).toEqual({ name: 'Bob', games: 2, wins: 1, pct: 50 })
+    expect(stats[2]).toEqual({ name: 'Carol', games: 1, wins: 0, pct: 0 })
+  })
+
+  it('ex aequo : les deux gagnants sont comptes (winners[])', () => {
+    const tie = [{ winner: 'A, B', winners: ['A', 'B'], scores: [{ name: 'A', score: 5 }, { name: 'B', score: 5 }] }]
+    const stats = computeHistoryStats(tie)
+    expect(stats.find(s => s.name === 'A').wins).toBe(1)
+    expect(stats.find(s => s.name === 'B').wins).toBe(1)
+  })
+
+  it('legacy sans winners[] : retombe sur winner (chaine)', () => {
+    const legacy = [{ winner: 'Zoe', scores: [{ name: 'Zoe', score: 9 }, { name: 'Max', score: 4 }] }]
+    expect(computeHistoryStats(legacy).find(s => s.name === 'Zoe').wins).toBe(1)
+  })
+
+  it('liste vide ou absente : tableau vide', () => {
+    expect(computeHistoryStats([])).toEqual([])
+    expect(computeHistoryStats(undefined)).toEqual([])
   })
 })

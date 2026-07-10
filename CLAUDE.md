@@ -21,7 +21,7 @@ src/
   gameLogic.js         — fonctions pures : makeActiveGame, computeTourScores,
                          isGameOver, getWinnerIndex, recordPastGame
   storage.js           — localStorage : loadData, saveGroups, saveActiveGame
-  App.jsx              — routeur top-level (GameSelector → GameApp | WhoStartsApp)
+  App.jsx              — routeur top-level (GameSelector → GameApp | WhoStartsApp | HistoryApp)
   screens/
     GameApp.jsx        — orchestration jeu (~700 lignes : données, navigation, victoire, overlays)
     boards/
@@ -30,6 +30,7 @@ src/
       ContractsBoard.jsx — moteur « contrats » (Barbu) — contractDraft local
       ProgressBoard.jsx  — moteur « progression » coop (Take Time) — sans score
     GameSelector.jsx   — sélecteur de jeu
+    HistoryApp.jsx     — écran plein Historique & stats (onglets Parties/Stats, filtres période+jeu+groupe)
     WhoStartsApp.jsx   — mini-app "doigts sur l'écran" pour désigner qui commence
   ui.jsx               — composants partagés (Btn, LimitCtrl, PlayerEditRow, GIcon, BottomSheet)
   usePressRepeat.js    — hook appui long (répétition 80ms après 400ms, cleanup au démontage)

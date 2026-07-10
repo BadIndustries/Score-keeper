@@ -570,7 +570,8 @@ export function GameApp({ gameId, onBack }) {
                           padding:"8px 0",borderBottom:`1px solid ${G.surface2}`,gap:8}}>
                           <div>
                             <div style={{fontFamily:"'Cinzel',serif",fontSize:".82rem",color:pgGame.accent}}>
-                              {pgGame.emoji} {pg.winner}
+                              {pgGame.emoji} {pgGame.label}
+                              <span style={{fontSize:".72rem",color:G.text,marginLeft:8}}>🏆 {pg.winner}</span>
                             </div>
                             <div style={{fontSize:".63rem",color:G.sub,marginTop:2,lineHeight:1.5}}>{sc}</div>
                           </div>
