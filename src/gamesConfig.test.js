@@ -110,6 +110,39 @@ describe('GAMES -- sideBadges (badges latéraux pilotés par la config)', () => 
   })
 })
 
+describe('GAMES -- Mythologies', () => {
+  const M = GAMES.mythologies
+  const fields = M.scoreFields
+
+  it('mythologies est defini : sheet, endOnDemand, highest', () => {
+    expect(M.scoreType).toBe('sheet')
+    expect(M.endOnDemand).toBe(true)
+    expect(M.winMode).toBe('highest')
+  })
+  it('3 champs : faveurs, finPartie, gemmes', () => {
+    expect(fields.map(f => f.key)).toEqual(['faveurs', 'finPartie', 'gemmes'])
+  })
+  it('tous les defaults a 0 (total initial 0)', () => {
+    for (const f of fields) expect(f.default).toBe(0)
+  })
+  it('gemmes : conversion 3 gemmes = 1 faveur (divideBy 3)', () => {
+    expect(fields.find(f => f.key === 'gemmes').divideBy).toBe(3)
+  })
+  it('faveurs et finPartie sans conversion', () => {
+    expect(fields.find(f => f.key === 'faveurs').divideBy).toBeUndefined()
+    expect(fields.find(f => f.key === 'finPartie').divideBy).toBeUndefined()
+  })
+  it('chaque champ a un hint', () => {
+    for (const f of fields) expect(typeof f.hint).toBe('string')
+  })
+  it('pas d extensions', () => {
+    expect(M.extensions).toBeUndefined()
+  })
+  it('DEFAULT_LIMITS contient mythologies', () => {
+    expect(DEFAULT_LIMITS.mythologies).toBe(999)
+  })
+})
+
 describe('GAMES -- Barbu', () => {
   const B = GAMES.barbu
   const contracts = B.contracts

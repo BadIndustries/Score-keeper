@@ -295,6 +295,22 @@ describe('computeTMTotal', () => {
     const fields = [{ key: 'tr' }]
     expect(computeTMTotal({ tr: 14, venus: 8 }, fields)).toBe(14)
   })
+
+  describe('divideBy (conversion, ex : gemmes Mythologies 3→1)', () => {
+    const fields = [{ key: 'faveurs' }, { key: 'gemmes', divideBy: 3 }]
+    it('division entiere arrondie a l inferieur', () => {
+      expect(computeTMTotal({ faveurs: 40, gemmes: 7 }, fields)).toBe(42) // 40 + ⌊7/3⌋
+    })
+    it('multiple exact', () => {
+      expect(computeTMTotal({ faveurs: 0, gemmes: 9 }, fields)).toBe(3)
+    })
+    it('moins que le diviseur → 0 point', () => {
+      expect(computeTMTotal({ faveurs: 10, gemmes: 2 }, fields)).toBe(10)
+    })
+    it('valeur absente → 0', () => {
+      expect(computeTMTotal({ faveurs: 5 }, fields)).toBe(5)
+    })
+  })
 })
 
 describe('computeContractScores (Le Barbu)', () => {

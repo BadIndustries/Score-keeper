@@ -9,7 +9,7 @@
 
 PWA mobile-first de comptage de points pour jeux de société. React 19 + Vite 8 + vitest. Déployée sur GitHub Pages (`badindustries/score-keeper`, branche `main`).
 
-**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies · Barbu
+**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies · Barbu · Mythologies
 
 ---
 
@@ -60,7 +60,8 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 - `G.scoreType === "sheet"` + `G.endOnDemand === true`
 - L'activeGame doit avoir `tmScores[]` et `tmExtensions{}` initialisés
 - Toujours utiliser `tmGetAllFields(G, exts)` pour la liste des champs actifs
-- `computeTMTotal(scores)` pour recalculer le total d'un joueur
+- `computeTMTotal(scores, fields)` pour recalculer le total d'un joueur
+- Un champ peut avoir `divideBy: n` : la saisie est convertie en points par division entière (ex : gemmes de Mythologies, 3 → 1 Faveur)
 
 ### Jeu à contrats (Barbu)
 - `G.scoreType === "contracts"` + `G.endOnDemand === true` + `winMode: "highest"` (scores ≤ 0, le moins négatif gagne)

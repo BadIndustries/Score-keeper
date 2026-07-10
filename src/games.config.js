@@ -6,6 +6,7 @@ export const KEY_QWIRKLE = "qwirkle-v1";
 export const KEY_TM     = "tm-v1";
 export const KEY_HARMONIES = "harmonies-v1";
 export const KEY_BARBU  = "barbu-v1";
+export const KEY_MYTHOLOGIES = "mythologies-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -260,6 +261,35 @@ export const GAMES = {
         components: [{ key: "reussite", label: "Classement à l'arrivée", emoji: "🏁" }] },
     ],
   },
+  mythologies: {
+    key: KEY_MYTHOLOGIES,
+    label: "Mythologies",
+    emoji: "\u{1F3DB}️",
+    color: "#a21caf",
+    colorDim: "rgba(162,28,175,.14)",
+    border: "#331038",
+    surface: "#1e0a22",
+    surface2: "#290e2e",
+    bg: "#130617",
+    text: "#f6e8f8",
+    sub: "#9a6aa4",
+    accent: "#e879f9",
+    btnBg: "#a21caf",
+    btnColor: "#f6e8f8",
+    desc: "Le plus de Faveurs gagne\nDécompte en fin de partie",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "sheet",
+    scoreFields: [
+      { key: "faveurs",   label: "Faveurs",        emoji: "⭐", default: 0, hint: "Faveurs accumulées sur la piste pendant la partie (cartes, lignes, colonnes, épreuves)" },
+      { key: "finPartie", label: "Fin de partie",  emoji: "✨", default: 0, hint: "Faveurs des effets de fin de partie de tes cartes" },
+      { key: "gemmes",    label: "Gemmes",         emoji: "💎", default: 0, divideBy: 3, hint: "Gemmes restantes — 3 gemmes = 1 Faveur (l'app convertit)" },
+    ],
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999 };

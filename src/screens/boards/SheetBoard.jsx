@@ -60,7 +60,11 @@ export function SheetBoard({ g, G, S, gameGroupName, update, goHome, finDePartie
               <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,
                 borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
+                <div style={{display:"flex",flexDirection:"column",minWidth:0}}>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
+                  {field.divideBy && <span style={{fontSize:".6rem",color:G.sub,marginTop:1}}>
+                    → +{Math.floor(val/field.divideBy)} pt{Math.floor(val/field.divideBy)>1?"s":""}</span>}
+                </div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   {field.quickSteps
                     ? <>{field.quickSteps.slice().reverse().map(s=>(
