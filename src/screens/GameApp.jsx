@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, reussiteRankRewards, medalRank, makeWinSnapshot, collectKnownPlayers } from '../gameLogic.js';
-import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow, BottomSheet } from '../ui.jsx';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, reussiteRankRewards, medalRank, makeWinSnapshot, collectKnownPlayers, filterByPeriod } from '../gameLogic.js';
+import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow, BottomSheet, PeriodChips } from '../ui.jsx';
 import { ClassicBoard } from './boards/ClassicBoard.jsx';
 import { SheetBoard } from './boards/SheetBoard.jsx';
 import { ContractsBoard } from './boards/ContractsBoard.jsx';
@@ -20,6 +20,7 @@ export function GameApp({ gameId, onBack }) {
   const [quickState, setQuickState] = useState(null);
   const [pastGroupId, setPastGroupId] = useState(null);
   const [statsGrpId, setStatsGrpId]   = useState(null);
+  const [histPeriod, setHistPeriod]   = useState("all");
 
   const persist = useCallback((next) => {
     try {
@@ -528,12 +529,18 @@ export function GameApp({ gameId, onBack }) {
       {/* ── SHEET: PAST GAMES ── */}
       {sheet==="past" && pastGroupId && (()=>{
         const grp=data.groups.find(x=>x.id===pastGroupId);
+        const filtered=filterByPeriod(grp?.pastGames, histPeriod);
         return (
           <BottomSheet title="🏆 Parties passées" G={G} maxHeight="78%" onClose={()=>setSheet(null)}>
+              <PeriodChips value={histPeriod} onChange={setHistPeriod} G={G}/>
+              <div style={{fontSize:".62rem",color:G.sub,padding:"6px 16px 0",flexShrink:0}}>
+                {filtered.length} partie{filtered.length>1?"s":""}{histPeriod!=="all"?" sur la période":""}
+              </div>
               <div style={{overflowY:"auto",flex:1,padding:"10px 14px"}}>
-                {!grp?.pastGames?.length
-                  ? <div style={{color:G.sub,textAlign:"center",padding:20}}>Aucune partie enregistrée</div>
-                  : grp.pastGames.map((pg,pi)=>{
+                {!filtered.length
+                  ? <div style={{color:G.sub,textAlign:"center",padding:20}}>
+                      {histPeriod==="all"?"Aucune partie enregistrée":"Aucune partie sur cette période"}</div>
+                  : filtered.map((pg,pi)=>{
                       const pgGame = GAMES[pg.gameId] || G;
                       const ds=new Date(pg.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
                       const sorted=[...pg.scores].sort((a,b)=>pgGame.winMode==="lowest"?a.score-b.score:b.score-a.score);
@@ -565,8 +572,9 @@ export function GameApp({ gameId, onBack }) {
       {sheet==="stats" && statsGrpId && (()=>{
         const grp = data.groups.find(x=>x.id===statsGrpId);
         if (!grp) return null;
+        const statGames = filterByPeriod(grp.pastGames, histPeriod);
         const overall = {};
-        (grp.pastGames||[]).forEach(pg=>{
+        statGames.forEach(pg=>{
           (pg.scores||[]).forEach(s=>{
             if(!overall[s.name]) overall[s.name]={games:0,wins:0};
             overall[s.name].games++;
@@ -576,9 +584,14 @@ export function GameApp({ gameId, onBack }) {
         const players = Object.entries(overall).sort((a,b)=>b[1].wins-a[1].wins);
         return (
           <BottomSheet title={`📊 Stats — ${grp.name}`} G={G} maxHeight="82%" onClose={()=>{setSheet(null);setStatsGrpId(null);}}>
+              <PeriodChips value={histPeriod} onChange={setHistPeriod} G={G}/>
+              <div style={{fontSize:".62rem",color:G.sub,padding:"6px 16px 0",flexShrink:0}}>
+                {statGames.length} partie{statGames.length>1?"s":""}{histPeriod!=="all"?" sur la période":""}
+              </div>
               <div style={{overflowY:"auto",flex:1,padding:"10px 14px 24px"}}>
                 {players.length===0
-                  ? <div style={{color:G.sub,textAlign:"center",padding:20}}>Aucune partie enregistrée</div>
+                  ? <div style={{color:G.sub,textAlign:"center",padding:20}}>
+                      {histPeriod==="all"?"Aucune partie enregistrée":"Aucune partie sur cette période"}</div>
                   : <>
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:".78rem",marginBottom:18}}>
                         <thead><tr>
@@ -621,7 +634,7 @@ export function GameApp({ gameId, onBack }) {
                         </tbody>
                       </table>
                       {Object.entries(GAMES).map(([gid,Gx])=>{
-                        const gh=(grp.pastGames||[]).filter(pg=>pg.gameId===gid);
+                        const gh=statGames.filter(pg=>pg.gameId===gid);
                         if(!gh.length) return null;
                         const pp={};
                         gh.forEach(pg=>{

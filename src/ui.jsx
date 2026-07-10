@@ -82,6 +82,40 @@ export function PlayerEditRow({ name, index, onChange, onRemove, canRemove, sugg
   );
 }
 
+// ── PERIOD CHIPS ─────────────────────────────────────────────────────
+// Filtre de période pour historique/stats (ex : ne voir que les parties
+// d'un festival). Avec G : thème du jeu ; sans : thème neutre sombre.
+const PERIODS = [
+  { key: "all",   label: "Tout" },
+  { key: "today", label: "Aujourd’hui" },
+  { key: "7d",    label: "7 jours" },
+  { key: "30d",   label: "30 jours" },
+];
+
+export function PeriodChips({ value, onChange, G }) {
+  const th = G
+    ? { border: G.border, sel: G.color, selBg: G.colorDim, selText: G.accent, text: G.sub, bg: G.surface2 }
+    : { border: "rgba(255,255,255,.12)", sel: "#5eb8ff", selBg: "rgba(94,184,255,.14)", selText: "#5eb8ff",
+        text: "rgba(255,255,255,.55)", bg: "rgba(255,255,255,.05)" };
+  return (
+    <div style={{ display: "flex", gap: 6, padding: "10px 14px 2px", flexShrink: 0, overflowX: "auto" }}>
+      {PERIODS.map(p => {
+        const sel = value === p.key;
+        return (
+          <div key={p.key} onClick={() => onChange(p.key)}
+            style={{ padding: "8px 13px", borderRadius: 20, cursor: "pointer", userSelect: "none",
+              whiteSpace: "nowrap", fontSize: ".72rem", fontWeight: sel ? 700 : 400,
+              border: `1px solid ${sel ? th.sel : th.border}`,
+              background: sel ? th.selBg : th.bg, color: sel ? th.selText : th.text,
+              transition: "all .15s" }}>
+            {p.label}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── BOTTOM SHEET ─────────────────────────────────────────────────────
 // Conteneur d'overlay partagé : backdrop, poignée, header (titre + ✕), corps.
 // Avec `G` : couleurs du thème du jeu ; sans : thème neutre sombre (GameSelector).

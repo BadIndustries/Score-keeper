@@ -105,6 +105,21 @@ export function medalRank(score, totals, winMode) {
   return (totals || []).filter(t => (winMode === 'lowest' ? t < score : t > score)).length;
 }
 
+// Filtre des parties passées par période glissante.
+// period : "all" | "today" | "7d" | "30d" — now injectable pour les tests.
+export function filterByPeriod(pastGames, period, now = new Date()) {
+  if (!period || period === 'all') return pastGames || [];
+  const start = new Date(now);
+  if (period === 'today') start.setHours(0, 0, 0, 0);
+  else if (period === '7d') start.setDate(start.getDate() - 7);
+  else if (period === '30d') start.setDate(start.getDate() - 30);
+  else return pastGames || [];
+  return (pastGames || []).filter(pg => {
+    const d = new Date(pg.date);
+    return !isNaN(d) && d >= start;
+  });
+}
+
 // Tous les noms de joueurs connus : groupes actuels + parties passées.
 // Dédoublonnés (insensible à la casse, la première graphie rencontrée gagne),
 // triés alphabétiquement (fr).

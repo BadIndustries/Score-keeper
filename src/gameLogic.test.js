@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod } from './gameLogic.js'
 import { GAMES } from './games.config.js'
 
 describe('computeTourScores', () => {
@@ -539,5 +539,45 @@ describe('collectKnownPlayers (suggestions de noms)', () => {
     expect(collectKnownPlayers(undefined)).toEqual([])
     expect(collectKnownPlayers([])).toEqual([])
     expect(collectKnownPlayers([{}])).toEqual([])
+  })
+})
+
+describe('filterByPeriod (filtre historique/stats)', () => {
+  // "now" injecte : samedi 10 juillet 2026, 15h
+  const now = new Date('2026-07-10T15:00:00')
+  const games = [
+    { date: '2026-07-10T10:00:00', id: 'ce-matin' },
+    { date: '2026-07-09T22:00:00', id: 'hier-soir' },
+    { date: '2026-07-05T18:00:00', id: 'il-y-a-5j' },
+    { date: '2026-06-20T12:00:00', id: 'il-y-a-20j' },
+    { date: '2026-04-01T12:00:00', id: 'il-y-a-3-mois' },
+  ]
+
+  it('all : tout est conserve', () => {
+    expect(filterByPeriod(games, 'all', now)).toHaveLength(5)
+  })
+
+  it("today : uniquement les parties d'aujourd'hui (depuis minuit)", () => {
+    expect(filterByPeriod(games, 'today', now).map(g => g.id)).toEqual(['ce-matin'])
+  })
+
+  it('7d : la fenetre glissante de 7 jours (festival)', () => {
+    expect(filterByPeriod(games, '7d', now).map(g => g.id)).toEqual(['ce-matin', 'hier-soir', 'il-y-a-5j'])
+  })
+
+  it('30d : fenetre de 30 jours', () => {
+    expect(filterByPeriod(games, '30d', now).map(g => g.id)).toEqual(['ce-matin', 'hier-soir', 'il-y-a-5j', 'il-y-a-20j'])
+  })
+
+  it('date invalide ou absente : exclue des periodes filtrees', () => {
+    const withBad = [...games, { date: 'pas-une-date', id: 'corrompue' }, { id: 'sans-date' }]
+    expect(filterByPeriod(withBad, '30d', now).map(g => g.id)).not.toContain('corrompue')
+    expect(filterByPeriod(withBad, 'all', now)).toHaveLength(7) // all ne filtre rien
+  })
+
+  it('periode inconnue ou liste absente : ne crash pas', () => {
+    expect(filterByPeriod(games, 'inconnu', now)).toHaveLength(5)
+    expect(filterByPeriod(undefined, '7d', now)).toEqual([])
+    expect(filterByPeriod(undefined, 'all', now)).toEqual([])
   })
 })

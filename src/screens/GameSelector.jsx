@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { GAMES, MEDALS, KEY_GROUPS } from '../games.config.js';
 import { saveGroups, loadGroups } from '../storage.js';
-import { GIcon, MIN_PLAYERS, BottomSheet } from '../ui.jsx';
-import { medalRank } from '../gameLogic.js';
+import { GIcon, MIN_PLAYERS, BottomSheet, PeriodChips } from '../ui.jsx';
+import { medalRank, filterByPeriod } from '../gameLogic.js';
 import { CHANGELOG } from '../changelog.js';
 
 // ── SELECTOR SCREEN ───────────────────────────────────────────────────
@@ -11,6 +11,7 @@ export function GameSelector({ onSelect }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [showInstall, setShowInstall] = useState(false);
+  const [histPeriod, setHistPeriod] = useState("all");
   const [importMsg,    setImportMsg]    = useState(null);
   const [updateMsg,    setUpdateMsg]    = useState(null);
   const [updating,     setUpdating]     = useState(false);
@@ -342,12 +343,17 @@ export function GameSelector({ onSelect }) {
 
       {/* ── HISTORY OVERLAY ── */}
       {showHistory && (()=>{
-        const history = allHistory();
+        const history = filterByPeriod(allHistory(), histPeriod);
         return (
           <BottomSheet title="📋 Toutes les parties" maxHeight="82%" zIndex={50} onClose={()=>setShowHistory(false)}>
+              <PeriodChips value={histPeriod} onChange={setHistPeriod}/>
+              <div style={{fontSize:".62rem",color:"rgba(255,255,255,.35)",padding:"6px 16px 0",flexShrink:0}}>
+                {history.length} partie{history.length>1?"s":""}{histPeriod!=="all"?" sur la période":""}
+              </div>
               <div style={{overflowY:"auto",flex:1,padding:"8px 14px 24px"}}>
                 {history.length===0
-                  ? <div style={{color:"rgba(255,255,255,.3)",textAlign:"center",padding:30,fontSize:".85rem"}}>Aucune partie enregistrée</div>
+                  ? <div style={{color:"rgba(255,255,255,.3)",textAlign:"center",padding:30,fontSize:".85rem"}}>
+                      {histPeriod==="all"?"Aucune partie enregistrée":"Aucune partie sur cette période"}</div>
                   : history.map((pg,i)=>{
                       const pgGame = GAMES[pg.gameId];
                       const ds = new Date(pg.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
