@@ -297,6 +297,33 @@ describe('computeTMTotal', () => {
     expect(computeTMTotal({ tr: 14, venus: 8 }, fields)).toBe(14)
   })
 
+  describe('multiplyWith / noPoints (rêves de Visions : env × cat)', () => {
+    const fields = [
+      { key: 'r1env', noPoints: true },
+      { key: 'r1cat', multiplyWith: 'r1env' },
+      { key: 'reflexions' },
+    ]
+    it('points du reve = environnement × categorie, le facteur ne compte pas seul', () => {
+      expect(computeTMTotal({ r1env: 4, r1cat: 3, reflexions: 5 }, fields)).toBe(17) // 4×3 + 5
+    })
+    it('facteur a zero → le reve vaut 0', () => {
+      expect(computeTMTotal({ r1env: 0, r1cat: 7, reflexions: 2 }, fields)).toBe(2)
+    })
+    it('valeurs absentes traitees comme 0', () => {
+      expect(computeTMTotal({ reflexions: 3 }, fields)).toBe(3)
+      expect(computeTMTotal({}, fields)).toBe(0)
+    })
+    it('score complet Visions : deux reves + reflexions', () => {
+      const vFields = [
+        { key: 'r1env', noPoints: true }, { key: 'r1cat', multiplyWith: 'r1env' },
+        { key: 'r2env', noPoints: true }, { key: 'r2cat', multiplyWith: 'r2env' },
+        { key: 'reflexions' },
+      ]
+      const scores = { r1env: 4, r1cat: 3, r2env: 5, r2cat: 2, reflexions: 6 }
+      expect(computeTMTotal(scores, vFields)).toBe(4*3 + 5*2 + 6) // 28
+    })
+  })
+
   describe('divideBy (conversion, ex : gemmes Mythologies 3→1)', () => {
     const fields = [{ key: 'faveurs' }, { key: 'gemmes', divideBy: 3 }]
     it('division entiere arrondie a l inferieur', () => {

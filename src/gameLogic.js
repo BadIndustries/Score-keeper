@@ -73,13 +73,18 @@ export function tmGetAllFields(G, exts = {}) {
 }
 
 // Avec fields : ne somme que les champs actifs (évite les scores fantômes d'extensions désactivées).
-// Un champ peut avoir `divideBy` : la valeur saisie est convertie en points
-// par division entière (ex : gemmes de Mythologies, 3 gemmes = 1 faveur).
+// Modificateurs de champ :
+// - `divideBy: n` — points = division entière (gemmes Mythologies, 3 → 1 Faveur)
+// - `noPoints` — saisie sans points propres (facteur d'un autre champ)
+// - `multiplyWith: key` — points = valeur × valeur du champ `key` (rêves de Visions)
 // Sans fields : somme toutes les clés (rétrocompatibilité).
 export function computeTMTotal(scores, fields) {
   if (fields) return fields.reduce((s, f) => {
+    if (f.noPoints) return s;
     const v = (scores?.[f.key]) || 0;
-    return s + (f.divideBy ? Math.floor(v / f.divideBy) : v);
+    if (f.multiplyWith) return s + v * ((scores?.[f.multiplyWith]) || 0);
+    if (f.divideBy) return s + Math.floor(v / f.divideBy);
+    return s + v;
   }, 0);
   return Object.values(scores || {}).reduce((s, v) => s + (v || 0), 0);
 }

@@ -143,6 +143,39 @@ describe('GAMES -- Mythologies', () => {
   })
 })
 
+describe('GAMES -- Visions', () => {
+  const V = GAMES.visions
+  const fields = V.scoreFields
+  it('visions est defini : sheet, endOnDemand, highest', () => {
+    expect(V.scoreType).toBe('sheet')
+    expect(V.endOnDemand).toBe(true)
+    expect(V.winMode).toBe('highest')
+  })
+  it('5 champs : r1env, r1cat, r2env, r2cat, reflexions', () => {
+    expect(fields.map(f => f.key)).toEqual(['r1env', 'r1cat', 'r2env', 'r2cat', 'reflexions'])
+  })
+  it('les environnements sont des facteurs sans points propres (noPoints)', () => {
+    expect(fields.find(f => f.key === 'r1env').noPoints).toBe(true)
+    expect(fields.find(f => f.key === 'r2env').noPoints).toBe(true)
+  })
+  it('les categories multiplient leur environnement (multiplyWith)', () => {
+    expect(fields.find(f => f.key === 'r1cat').multiplyWith).toBe('r1env')
+    expect(fields.find(f => f.key === 'r2cat').multiplyWith).toBe('r2env')
+  })
+  it('reflexions : points directs, sans modificateur', () => {
+    const r = fields.find(f => f.key === 'reflexions')
+    expect(r.noPoints).toBeUndefined()
+    expect(r.multiplyWith).toBeUndefined()
+  })
+  it('chaque multiplyWith reference un champ existant du jeu', () => {
+    const keys = fields.map(f => f.key)
+    for (const f of fields) if (f.multiplyWith) expect(keys).toContain(f.multiplyWith)
+  })
+  it('DEFAULT_LIMITS contient visions', () => {
+    expect(DEFAULT_LIMITS.visions).toBe(999)
+  })
+})
+
 describe('GAMES -- Take Time', () => {
   const T = GAMES.taketime
   it('cooperatif a progression : progress, coop, endOnDemand', () => {

@@ -64,6 +64,13 @@ export function SheetBoard({ g, G, S, gameGroupName, update, goHome, finDePartie
                   <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
                   {field.divideBy && <span style={{fontSize:".6rem",color:G.sub,marginTop:1}}>
                     → +{Math.floor(val/field.divideBy)} pt{Math.floor(val/field.divideBy)>1?"s":""}</span>}
+                  {field.multiplyWith && (()=>{
+                    const other=(g.tmScores?.[i]||{})[field.multiplyWith]??0;
+                    return <span style={{fontSize:".6rem",color:G.sub,marginTop:1}}>
+                      → {other} × {val} = <strong style={{color:G.accent}}>{other*val}</strong> pts</span>;
+                  })()}
+                  {field.noPoints && <span style={{fontSize:".6rem",color:G.sub,marginTop:1}}>
+                    sera multiplié à l'étape suivante</span>}
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   {field.quickSteps

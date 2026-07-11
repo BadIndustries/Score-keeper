@@ -8,6 +8,7 @@ export const KEY_HARMONIES = "harmonies-v1";
 export const KEY_BARBU  = "barbu-v1";
 export const KEY_MYTHOLOGIES = "mythologies-v1";
 export const KEY_TAKETIME = "taketime-v1";
+export const KEY_VISIONS = "visions-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -318,6 +319,42 @@ export const GAMES = {
     chapters: 10,
     clocksPerChapter: 4,
   },
+  visions: {
+    key: KEY_VISIONS,
+    label: "Visions",
+    emoji: "\u{1F319}",
+    color: "#4f46e5",
+    colorDim: "rgba(79,70,229,.16)",
+    border: "#232055",
+    surface: "#131132",
+    surface2: "#1a1740",
+    bg: "#0b0a1c",
+    text: "#eceafc",
+    sub: "#7d78b0",
+    accent: "#a5b4fc",
+    btnBg: "#4f46e5",
+    btnColor: "#eceafc",
+    desc: "Le plus de points gagne\nR\u00eaves : environnement \u00d7 cat\u00e9gorie",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "sheet",
+    scoreFields: [
+      { key: "r1env", label: "R\u00eave 1 \u00b7 Environnement", emoji: "\u{1F319}", default: 0, noPoints: true,
+        hint: "Nombre de cartes de l'environnement le plus fr\u00e9quent du r\u00eave 1" },
+      { key: "r1cat", label: "R\u00eave 1 \u00b7 Cat\u00e9gorie", emoji: "\u2728", default: 0, multiplyWith: "r1env",
+        hint: "Nombre de cartes de la cat\u00e9gorie la plus fr\u00e9quente \u2014 points = environnement \u00d7 cat\u00e9gorie" },
+      { key: "r2env", label: "R\u00eave 2 \u00b7 Environnement", emoji: "\u{1F30C}", default: 0, noPoints: true,
+        hint: "Nombre de cartes de l'environnement le plus fr\u00e9quent du r\u00eave 2" },
+      { key: "r2cat", label: "R\u00eave 2 \u00b7 Cat\u00e9gorie", emoji: "\u{1F984}", default: 0, multiplyWith: "r2env",
+        hint: "Nombre de cartes de la cat\u00e9gorie la plus fr\u00e9quente \u2014 points = environnement \u00d7 cat\u00e9gorie" },
+      { key: "reflexions", label: "R\u00e9flexions", emoji: "\u{1F4AD}", default: 0,
+        hint: "Ta position sur la piste des R\u00e9flexions" },
+    ],
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999, taketime: 999 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999, taketime: 999, visions: 999 };
