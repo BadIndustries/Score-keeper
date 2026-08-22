@@ -9,6 +9,7 @@ export const KEY_BARBU  = "barbu-v1";
 export const KEY_MYTHOLOGIES = "mythologies-v1";
 export const KEY_TAKETIME = "taketime-v1";
 export const KEY_VISIONS = "visions-v1";
+export const KEY_PAPATTES = "papattes-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -355,6 +356,31 @@ export const GAMES = {
         hint: "Ta position sur la piste des R\u00e9flexions" },
     ],
   },
+  papattes: {
+    key: KEY_PAPATTES,
+    label: "Les Papattes",
+    emoji: "\u{1F43E}",
+    color: "#0ea5e9",
+    colorDim: "rgba(14,165,233,.14)",
+    border: "#0c2a38",
+    surface: "#08202b",
+    surface2: "#0d2c39",
+    bg: "#04141b",
+    text: "#e0f4fb",
+    sub: "#5a95a8",
+    accent: "#38bdf8",
+    btnBg: "#0ea5e9",
+    btnColor: "#04141b",
+    desc: "Le premier à 25 points gagne\nLancez vos papattes vers la rivière",
+    defaultLimit: 25,
+    limitLabel: "Objectif de points",
+    limitMin: 15, limitMax: 50, limitStep: 5,
+    goalKey: "goal",
+    winMode: "highest",
+    sideBadges: [
+      { type: "add", value: 3, emoji: "🐊", label: "+3 proche", minWidth: 70 },
+    ],
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999, taketime: 999, visions: 999 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999, taketime: 999, visions: 999, papattes: 25 };

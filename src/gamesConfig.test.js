@@ -176,6 +176,24 @@ describe('GAMES -- Visions', () => {
   })
 })
 
+describe('GAMES -- Les Papattes', () => {
+  const P = GAMES.papattes
+  it('jeu classique (pas de scoreType) : premier a 25 points gagne', () => {
+    expect(P.scoreType).toBeUndefined()
+    expect(P.winMode).toBe('highest')
+    expect(P.defaultLimit).toBe(25)
+  })
+  it('badge +3 pour la papatte la plus proche (type add, generique)', () => {
+    const b = P.sideBadges
+    expect(b).toHaveLength(1)
+    expect(b[0].type).toBe('add')
+    expect(b[0].value).toBe(3)
+  })
+  it('DEFAULT_LIMITS contient papattes a 25', () => {
+    expect(DEFAULT_LIMITS.papattes).toBe(25)
+  })
+})
+
 describe('GAMES -- Take Time', () => {
   const T = GAMES.taketime
   it('cooperatif a progression : progress, coop, endOnDemand', () => {
