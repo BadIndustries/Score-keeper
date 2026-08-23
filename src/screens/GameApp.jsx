@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { GAMES, COLORS, MEDALS, genId, DEFAULT_LIMITS } from '../games.config.js';
 import { loadData, saveGroups, saveActiveGame } from '../storage.js';
-import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, reussiteRankRewards, medalRank, makeWinSnapshot, collectKnownPlayers, filterByPeriod, recordCampaign } from '../gameLogic.js';
+import { makeActiveGame, computeTourScores, isGameOver, recordPastGame, tmGetAllFields, computeTMTotal, rankRewardsFor, medalRank, makeWinSnapshot, collectKnownPlayers, filterByPeriod, recordCampaign } from '../gameLogic.js';
 import { Btn, GIcon, MIN_PLAYERS, LimitCtrl, PlayerEditRow, BottomSheet, PeriodChips } from '../ui.jsx';
 import { ClassicBoard } from './boards/ClassicBoard.jsx';
 import { SheetBoard } from './boards/SheetBoard.jsx';
@@ -448,9 +448,10 @@ export function GameApp({ gameId, onBack }) {
           update={update} goHome={goHome} finDePartie={finDePartie}/>}
 
       {screen==="game" && g && G.scoreType==="contracts" &&
-        <ContractsBoard g={g} G={G} S={S} gameGroupName={gameGroupName}
-          roundNum={roundNum} getRankIcon={getRankIcon} update={update}
-          setSheet={setSheet} goHome={goHome} finDePartie={finDePartie}/>}
+        <ContractsBoard g={g} G={G} gameId={gameId} S={S} gameGroupName={gameGroupName}
+          roundNum={roundNum} roundLabel={roundLabel} getRankIcon={getRankIcon} update={update}
+          setSheet={setSheet} goHome={goHome} finDePartie={finDePartie}
+          setWinSnapshot={setWinSnapshot} setShowWin={setShowWin}/>}
 
       {screen==="game" && g && G.scoreType==="progress" &&
         <ProgressBoard g={g} G={G} S={S} gameGroupName={gameGroupName}
@@ -493,54 +494,48 @@ export function GameApp({ gameId, onBack }) {
         </BottomSheet>
       )}
 
-      {/* ── SHEET: RULES (Barbu) ── */}
+      {/* ── SHEET: RULES (jeux à contrats) ── */}
       {sheet==="rules" && g && G.scoreType==="contracts" && (
         <BottomSheet title={`📖 Règles — ${G.label}`} G={G} maxHeight="86%" onClose={()=>setSheet(null)}>
             <div style={{overflowY:"auto",flex:1,padding:"12px 16px 24px"}}>
               <div style={{fontSize:".8rem",color:G.text,lineHeight:1.5,marginBottom:14}}>
-                Jeu à contrats. <strong style={{color:G.accent}}>Le moins de points gagne</strong> (les scores sont négatifs,
-                le moins négatif l'emporte). À chaque manche, le donneur choisit un contrat ; pour chacun,
-                on saisit ce que chaque joueur a ramassé et l'app calcule les points.
+                {G.rulesIntro}
               </div>
 
-              <div style={{fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:G.sub,marginBottom:8}}>Les contrats</div>
-              {G.contracts.map(c=>{
-                const reussite=c.mode==="rank";
-                const rewards=reussite?reussiteRankRewards(g.players.length, c.rankStep):null;
-                return (
-                  <div key={c.key} style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:12,
-                    padding:"10px 12px",marginBottom:7}}>
-                    <div style={{display:"flex",alignItems:"center",gap:9}}>
-                      <span style={{fontSize:"1.3rem",flexShrink:0}}>{c.emoji}</span>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:"'Cinzel',serif",fontSize:".9rem",fontWeight:700,color:c.positive?"#6dcc90":G.text}}>{c.label}</div>
-                        <div style={{fontSize:".68rem",color:G.sub,marginTop:1}}>{c.hint}</div>
-                      </div>
+              <div style={{fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:G.sub,marginBottom:8}}>{roundLabel}s</div>
+              {G.contracts.map(c=>(
+                <div key={c.key} style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:12,
+                  padding:"10px 12px",marginBottom:7}}>
+                  <div style={{display:"flex",alignItems:"center",gap:9}}>
+                    <span style={{fontSize:"1.3rem",flexShrink:0}}>{c.emoji}</span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontFamily:"'Cinzel',serif",fontSize:".9rem",fontWeight:700,color:c.positive?"#6dcc90":G.text}}>{c.label}</div>
+                      <div style={{fontSize:".68rem",color:G.sub,marginTop:1}}>{c.hint}</div>
                     </div>
-                    {c.key==="salade" && (
-                      <div style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`,
-                        display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
-                        {c.components.map(comp=>(
-                          <span key={comp.key}>{comp.emoji} {comp.label} <strong style={{color:"#ff8070"}}>{comp.per}</strong></span>
-                        ))}
-                      </div>
-                    )}
-                    {reussite && (
-                      <div style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`,
-                        display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
-                        {rewards.map((pts,r)=>(
-                          <span key={r}>{r+1}{r===0?"er":"e"} <strong style={{color:"#6dcc90"}}>{pts>0?`+${pts}`:"0"}</strong></span>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                );
-              })}
-
-              <div style={{fontSize:".66rem",color:G.sub,lineHeight:1.5,marginTop:12,fontStyle:"italic"}}>
-                Valeurs standard françaises. La réussite ({G.label}) suit l'ordre d'arrivée :
-                +{G.contracts.find(c=>c.mode==="rank")?.rankStep} points par joueur battu.
-              </div>
+                  {c.key==="salade" && (
+                    <div style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`,
+                      display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
+                      {c.components.map(comp=>(
+                        <span key={comp.key}>{comp.emoji} {comp.label} <strong style={{color:"#ff8070"}}>{comp.per}</strong></span>
+                      ))}
+                    </div>
+                  )}
+                  {c.components.filter(comp=>comp.mode==="rank").map(comp=>{
+                    const rewards=rankRewardsFor(comp, g.players.length);
+                    return (
+                      <div key={comp.key} style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`}}>
+                        <div style={{marginBottom:4,color:G.text}}>{comp.emoji} {comp.label}</div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
+                          {rewards.map((pts,r)=>(
+                            <span key={r}>{rewards.length>1?`${r+1}${r===0?"er":"e"}`:"✓"} <strong style={{color:"#6dcc90"}}>{pts>0?`+${pts}`:"0"}</strong></span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
         </BottomSheet>
       )}

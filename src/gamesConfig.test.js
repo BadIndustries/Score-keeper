@@ -178,16 +178,38 @@ describe('GAMES -- Visions', () => {
 
 describe('GAMES -- Les Papattes', () => {
   const P = GAMES.papattes
-  it('jeu classique (pas de scoreType) : premier a 25 points gagne', () => {
-    expect(P.scoreType).toBeUndefined()
+  const manche = P.contracts.find(c => c.key === 'manche')
+
+  function getComp(key) {
+    return manche.components.find(c => c.key === key)
+  }
+
+  it('jeu a contrats (une seule manche), fin automatique a 25 points', () => {
+    expect(P.scoreType).toBe('contracts')
+    expect(P.endOnDemand).toBe(false)
     expect(P.winMode).toBe('highest')
     expect(P.defaultLimit).toBe(25)
   })
-  it('badge +3 pour la papatte la plus proche (type add, generique)', () => {
-    const b = P.sideBadges
-    expect(b).toHaveLength(1)
-    expect(b[0].type).toBe('add')
-    expect(b[0].value).toBe(3)
+  it('un seul contrat "manche" avec 3 composants', () => {
+    expect(P.contracts).toHaveLength(1)
+    expect(manche.components.map(c => c.key)).toEqual(['restantes', 'proximite', 'ecart'])
+  })
+  it('papattes restantes : 1 point chacune, pas de classement', () => {
+    const r = getComp('restantes')
+    expect(r.per).toBe(1)
+    expect(r.mode).toBeUndefined()
+  })
+  it('proximite : podium fixe 3/2/1, classement optionnel (pas requireRank)', () => {
+    const p = getComp('proximite')
+    expect(p.mode).toBe('rank')
+    expect(p.rewards).toEqual([3, 2, 1])
+    expect(p.requireRank).toBeUndefined()
+  })
+  it('ecart : bonus unique de 2 points, classement optionnel', () => {
+    const e = getComp('ecart')
+    expect(e.mode).toBe('rank')
+    expect(e.rewards).toEqual([2])
+    expect(e.requireRank).toBeUndefined()
   })
   it('DEFAULT_LIMITS contient papattes a 25', () => {
     expect(DEFAULT_LIMITS.papattes).toBe(25)
@@ -276,13 +298,14 @@ describe('GAMES -- Barbu', () => {
     expect(r.positive).toBe(true)
     expect(r.components[0].per).toBeUndefined()
   })
-  it('reussite utilise le mode classement (+15 par joueur battu)', () => {
-    const r = getContract('reussite')
-    expect(r.mode).toBe('rank')
-    expect(r.rankStep).toBe(15)
+  it('reussite utilise le mode classement (+15 par joueur battu), classement obligatoire', () => {
+    const comp = getContract('reussite').components[0]
+    expect(comp.mode).toBe('rank')
+    expect(comp.rankStep).toBe(15)
+    expect(comp.requireRank).toBe(true)
   })
-  it('reussite est le seul contrat en mode rank', () => {
-    const rankContracts = contracts.filter(c => c.mode === 'rank')
+  it('reussite est le seul contrat du Barbu avec un composant en mode rank', () => {
+    const rankContracts = contracts.filter(c => c.components.some(comp => comp.mode === 'rank'))
     expect(rankContracts.map(c => c.key)).toEqual(['reussite'])
   })
 

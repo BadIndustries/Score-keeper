@@ -73,9 +73,14 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 - `G.contracts[]` : chaque contrat a `components[]` ; un composant = `{ key, label, emoji, per?, max?, step? }`
 - `per` défini → points = compte × per (ex : −5 par pli) ; `per` absent → le compte EST le nombre de points
 - `computeContractScores(contract, counts, playerCount)` : fonction pure, somme tous les composants par joueur
-- Réussite = `mode: "rank"` + `rankStep` : sélecteur de classement, +rankStep par joueur battu (`reussiteRankRewards(n, step)` → ex `[45,30,15,0]`)
-- Salade = un contrat à 5 composants (plis/cœurs/dames/barbu/derniers), parcouru en wizard comme les étapes TM
+- Composant `mode: "rank"` : classement à choix unique par valeur (`setRankValue`), barème via `rankRewardsFor(comp, playerCount)` :
+  - `comp.rewards: [n,m,...]` — podium fixe explicite (ex Papattes `[3,2,1]` : seuls les 3 premiers marquent, les autres restent à 0 sans avertissement)
+  - `comp.rankStep` — calculé pour TOUS les joueurs (`reussiteRankRewards(n, step)`, réussite du Barbu → `[45,30,15,0]`)
+  - `comp.requireRank: true` (Barbu réussite) → init `null`, bordure rouge + "—" tant que non saisi ; sans ce flag (Papattes) → init `0`, jamais d'avertissement (rester à 0 est un résultat normal)
+- Salade (Barbu) = un contrat à 5 composants (plis/cœurs/dames/barbu/derniers), parcouru en wizard comme les étapes TM
+- Les Papattes = un seul contrat « Manche » à 3 composants : `restantes` (per:1, compteur classique), `proximite` (rank, rewards `[3,2,1]`), `ecart` (rank, rewards `[2]`) — fin automatique à 25 pts (`endOnDemand:false`, `validerContract` vérifie `isGameOver` comme `validerRound`)
 - L'écran utilise un `contractDraft` local `{ key, step, counts }` ; à la validation : push dans `history` `{contract, scores}`, cumul dans `totals`, `tour/manche = history.length`
+- `G.rulesIntro` (string) alimente l'intro de la fiche 📖 Règles, générique à tous les jeux à contrats
 
 ### Jeu coopératif à progression (Take Time)
 - `G.scoreType === "progress"` + `G.coop: true` + `chapters`/`clocksPerChapter` dans la config

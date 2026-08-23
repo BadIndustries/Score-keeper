@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod, campaignStats, recordCampaign, computeHistoryStats } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, rankRewardsFor, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod, campaignStats, recordCampaign, computeHistoryStats } from './gameLogic.js'
 import { GAMES } from './games.config.js'
 
 describe('computeTourScores', () => {
@@ -408,6 +408,48 @@ describe('reussiteRankRewards (Le Barbu)', () => {
   })
   it('pas de 10 : [20, 10, 0] pour 3 joueurs', () => {
     expect(reussiteRankRewards(3, 10)).toEqual([20, 10, 0])
+  })
+})
+
+describe('rankRewardsFor (barème rank générique : Barbu réussite, Les Papattes)', () => {
+  it('rewards explicite (podium fixe) : retourne le tableau tel quel, ignore playerCount', () => {
+    expect(rankRewardsFor({ rewards: [3, 2, 1] }, 6)).toEqual([3, 2, 1])
+    expect(rankRewardsFor({ rewards: [2] }, 4)).toEqual([2])
+  })
+  it('sans rewards explicite, avec rankStep : calcule via reussiteRankRewards (Barbu)', () => {
+    expect(rankRewardsFor({ rankStep: 15 }, 4)).toEqual([45, 30, 15, 0])
+  })
+  it('ni rewards ni rankStep : tableau de zeros', () => {
+    expect(rankRewardsFor({}, 3)).toEqual([0, 0, 0])
+  })
+  it('comp absent ne crash pas', () => {
+    expect(rankRewardsFor(undefined, 3)).toEqual([0, 0, 0])
+  })
+})
+
+describe('Les Papattes -- calcul d une manche via computeContractScores', () => {
+  const contract = {
+    components: [
+      { key: 'restantes', per: 1 },
+      { key: 'proximite' },  // mode rank, mais computeContractScores ne regarde que per
+      { key: 'ecart' },
+    ],
+  }
+  it('additionne papattes restantes + bonus proximite + bonus ecart', () => {
+    const counts = {
+      restantes: [3, 2, 1],
+      proximite: [3, 2, 0],  // 1er(+3), 2e(+2), non classe
+      ecart: [0, 2, 0],      // seul le joueur 1 a l ecart le plus serre (+2)
+    }
+    expect(computeContractScores(contract, counts, 3)).toEqual([6, 6, 1])
+  })
+  it('personne classe en proximite/ecart : seules les papattes restantes comptent', () => {
+    const counts = { restantes: [4, 2], proximite: [0, 0], ecart: [0, 0] }
+    expect(computeContractScores(contract, counts, 2)).toEqual([4, 2])
+  })
+  it('valeurs null (non classe) traitees comme 0', () => {
+    const counts = { restantes: [5], proximite: [null], ecart: [null] }
+    expect(computeContractScores(contract, counts, 1)).toEqual([5])
   })
 })
 

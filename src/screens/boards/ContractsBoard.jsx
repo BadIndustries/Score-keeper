@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { COLORS } from '../../games.config.js';
-import { computeContractScores, reussiteRankRewards } from '../../gameLogic.js';
+import { computeContractScores, rankRewardsFor, isGameOver, makeWinSnapshot, recordPastGame } from '../../gameLogic.js';
 import { Btn, GIcon } from '../../ui.jsx';
 import { usePressRepeat } from '../../usePressRepeat.js';
 
-// Moteur « jeu à contrats » : Le Barbu.
-export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
-  update, setSheet, goHome, finDePartie }) {
+// Moteur « jeu à contrats » : Le Barbu, Les Papattes.
+export function ContractsBoard({ g, G, gameId, S, gameGroupName, roundNum, roundLabel, getRankIcon,
+  update, setSheet, goHome, finDePartie, setWinSnapshot, setShowWin }) {
   const pressProps = usePressRepeat();
   const [contractDraft, setContractDraft] = useState(null);
 
   function startContract(c){
-    // Mode classement (réussite) : null = non saisi (≠ dernier). Sinon 0.
-    const init=c.mode==="rank"?null:0;
     setContractDraft({
       key: c.key,
       step: 0,
-      counts: Object.fromEntries(c.components.map(comp=>[comp.key, g.players.map(()=>init)])),
+      counts: Object.fromEntries(c.components.map(comp=>{
+        // Rang à choix obligatoire (Barbu réussite) : null = non saisi (≠ dernier).
+        // Rang optionnel (podium Papattes) : 0 par défaut, personne n'est forcé d'être classé.
+        const init = comp.mode==="rank" ? (comp.requireRank ? null : 0) : 0;
+        return [comp.key, g.players.map(()=>init)];
+      })),
     });
   }
   function adjustContractCount(compKey, i, d, max){
@@ -26,14 +29,14 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
       return {...dr, counts:{...dr.counts, [compKey]:arr}};
     });
   }
-  // Réussite : un rang est unique. Attribuer un rang à un joueur le retire
-  // de tout autre joueur qui l'avait (toggle si on retape le même).
-  function setReussiteRank(compKey, i, pts){
+  // Un rang est unique pour une valeur donnée : l'attribuer à un joueur le retire
+  // de tout autre joueur qui l'avait (toggle si on retape la même valeur).
+  function setRankValue(compKey, i, pts){
     setContractDraft(dr=>{
       const cur=dr.counts[compKey];
       const arr=cur.map((v,j)=>{
         if(j===i) return v===pts ? null : pts;   // re-tap = désélection
-        return v===pts ? null : v;                // libère le rang chez les autres
+        return v===pts ? null : v;                // libère la valeur chez les autres
       });
       return {...dr, counts:{...dr.counts, [compKey]:arr}};
     });
@@ -43,14 +46,25 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
     const contract=G.contracts.find(c=>c.key===contractDraft.key);
     if(!contract){ setContractDraft(null); return; }
     const scores=computeContractScores(contract, contractDraft.counts, g.players.length);
+    const newTotals=g.totals.map((t,i)=>t+scores[i]);
+    const willWin = !G.endOnDemand && isGameOver(newTotals, g.limit);
+    const winSnap = willWin ? makeWinSnapshot(g, G, gameId, newTotals) : null;
     update(a=>{
       const ag=a.activeGame;
       ag.history.push({contract:contract.key, scores:[...scores]});
       scores.forEach((pts,i)=>{ ag.totals[i]+=pts; });
       ag.tour=ag.history.length; ag.manche=ag.history.length;
+      if(willWin){
+        if(ag.groupId){
+          const grp=a.groups.find(x=>x.id===ag.groupId);
+          if(grp) recordPastGame(grp, gameId, ag, G.winMode);
+        }
+        a.activeGame=null;
+      }
       return a;
     });
     setContractDraft(null);
+    if(willWin){ setWinSnapshot(winSnap); setShowWin(true); }
   }
 
   const playedCounts={};
@@ -64,7 +78,7 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
         <div style={{display:"flex",gap:6,alignItems:"center"}}>
           <div style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:8,padding:"4px 10px",
             textAlign:"center",fontSize:".58rem",letterSpacing:".12em",textTransform:"uppercase",color:G.sub}}>
-            Contrats<strong style={{color:G.accent,fontSize:".95rem",display:"block",lineHeight:1.1,letterSpacing:0}}>{g.history.length}</strong>
+            {roundLabel}s<strong style={{color:G.accent,fontSize:".95rem",display:"block",lineHeight:1.1,letterSpacing:0}}>{g.history.length}</strong>
           </div>
           <div style={S.iconBtn} onClick={()=>setSheet("rules")}>📖</div>
           <div style={S.iconBtn} onClick={()=>setSheet("history")}>📜</div>
@@ -116,8 +130,9 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
       </div>
 
       <div style={S.footer}>
-        <Btn ghost G={G} onClick={()=>{if(window.confirm("Quitter la partie ?"))goHome();}}>← Quitter</Btn>
-        <Btn primary G={G} style={{flex:1}} onClick={finDePartie}>🏁 Terminer la partie</Btn>
+        <Btn ghost G={G} style={!G.endOnDemand?{flex:1}:undefined}
+          onClick={()=>{if(window.confirm("Quitter la partie ?"))goHome();}}>← Quitter</Btn>
+        {G.endOnDemand && <Btn primary G={G} style={{flex:1}} onClick={finDePartie}>🏁 Terminer la partie</Btn>}
       </div>
     </>
   );
@@ -142,8 +157,9 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
           <div style={{fontSize:"1.6rem",lineHeight:1}}>{comp.emoji}</div>
           <div style={{fontFamily:"'Cinzel',serif",fontSize:"1.1rem",fontWeight:700,color:G.accent,marginTop:4}}>{comp.label}</div>
           <div style={{fontSize:".72rem",color:G.sub,marginTop:3}}>
-            {contract.mode==="rank"?`Désigne la place de chaque joueur (+${contract.rankStep} par joueur battu)`
-              :comp.per!=null?`${comp.per} point${Math.abs(comp.per)>1?"s":""} par unité`:"Saisis directement les points"}
+            {comp.hint ? comp.hint
+              : comp.mode==="rank" ? `Désigne la place de chaque joueur${comp.rankStep?` (+${comp.rankStep} par joueur battu)`:''}`
+              : comp.per!=null?`${comp.per} point${Math.abs(comp.per)>1?"s":""} par unité`:"Saisis directement les points"}
           </div>
         </div>
         {comps.length>1 && <div style={{display:"flex",gap:4,marginBottom:4}}>
@@ -156,28 +172,32 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
       </div>
 
       <div style={{display:"flex",flexDirection:"column",gap:8,flex:1,padding:"4px 12px",overflowY:"auto"}}>
-        {contract.mode==="rank" && (()=>{
-          const rewards=reussiteRankRewards(g.players.length, contract.rankStep);
+        {comp.mode==="rank" && (()=>{
+          const rewards=rankRewardsFor(comp, g.players.length);
           return g.players.map((name,i)=>{
             const val=contractDraft.counts[comp.key][i];
-            const saisi=val!=null;
+            const requireRank=!!comp.requireRank;
+            const saisi=requireRank?val!=null:true;
+            const display=requireRank?(val==null?"—":(val>0?`+${val}`:"0")):(val>0?`+${val}`:"0");
             return (
               <div key={i} style={{background:G.surface,border:`1px solid ${saisi?G.border:"#7a3030"}`,borderRadius:14,
                 padding:"10px 14px 10px 16px",position:"relative",flexShrink:0}}>
                 <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"14px 0 0 14px",background:COLORS[i%COLORS.length]}}/>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                   <span style={{fontFamily:"'Cinzel',serif",fontSize:".95rem",fontWeight:700}}>{name}</span>
-                  <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:900,color:val>0?"#6dcc90":saisi?G.sub:"#c87070",lineHeight:1}}>{!saisi?"—":val>0?`+${val}`:"0"}</span>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:900,color:val>0?"#6dcc90":saisi?G.sub:"#c87070",lineHeight:1}}>{display}</span>
                 </div>
                 <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
                   {rewards.map((pts,r)=>{
                     const sel=val===pts;
                     return (
-                      <div key={r} onClick={()=>setReussiteRank(comp.key,i,pts)}
+                      <div key={r} onClick={()=>setRankValue(comp.key,i,pts)}
                         style={{flex:"1 1 auto",minWidth:54,height:42,borderRadius:10,cursor:"pointer",userSelect:"none",
                           border:`1px solid ${sel?G.color:G.border}`,background:sel?G.colorDim:G.surface2,
                           display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
-                        <span style={{fontSize:".72rem",fontWeight:700,color:sel?G.accent:G.text}}>{r+1}{r===0?"er":"e"}</span>
+                        <span style={{fontSize:".72rem",fontWeight:700,color:sel?G.accent:G.text}}>
+                          {rewards.length>1?`${r+1}${r===0?"er":"e"}`:"✓"}
+                        </span>
                         <span style={{fontSize:".58rem",color:sel?G.accent:G.sub}}>{pts>0?`+${pts}`:"0"}</span>
                       </div>
                     );
@@ -188,7 +208,7 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
           });
         })()}
 
-        {contract.mode!=="rank" && g.players.map((name,i)=>{
+        {comp.mode!=="rank" && g.players.map((name,i)=>{
           const val=contractDraft.counts[comp.key][i];
           const countStep=comp.per!=null?1:(comp.step||1);
           const stepPts=comp.per!=null?Math.abs(comp.per):(comp.step||1);
@@ -223,7 +243,7 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
         })}
 
         <div style={{background:G.surface,border:`1px solid ${G.border}`,borderRadius:14,padding:"10px 14px",flexShrink:0}}>
-          <div style={{fontSize:".6rem",letterSpacing:".1em",textTransform:"uppercase",color:G.sub,marginBottom:6}}>Total du contrat</div>
+          <div style={{fontSize:".6rem",letterSpacing:".1em",textTransform:"uppercase",color:G.sub,marginBottom:6}}>Total — {roundLabel}</div>
           {g.players.map((name,i)=>(
             <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:".8rem",padding:"2px 0"}}>
               <span style={{color:G.sub}}>{name}</span>
@@ -240,7 +260,7 @@ export function ContractsBoard({ g, G, S, gameGroupName, roundNum, getRankIcon,
         }}>✕ Annuler</Btn>
         {contractDraft.step>0 && <Btn ghost G={G} onClick={()=>setContractDraft(dr=>({...dr,step:dr.step-1}))}>◀</Btn>}
         {isLast
-          ? <Btn primary G={G} style={{flex:1}} onClick={validerContract}>✓ Valider le contrat</Btn>
+          ? <Btn primary G={G} style={{flex:1}} onClick={validerContract}>✓ Valider</Btn>
           : <Btn primary G={G} style={{flex:1}} onClick={()=>setContractDraft(dr=>({...dr,step:dr.step+1}))}>Suivant ▶</Btn>}
       </div>
     </>

@@ -109,6 +109,16 @@ export function reussiteRankRewards(playerCount, step) {
   return Array.from({ length: playerCount }, (_, r) => (playerCount - 1 - r) * step);
 }
 
+// Barème de récompense d'un composant "mode: rank" (Barbu réussite, Les Papattes) :
+// - `rewards` explicite → podium fixe, tel quel (ex Papattes [3,2,1] : seuls les 3 premiers marquent)
+// - sinon `rankStep` → calculé pour tous les joueurs (Barbu réussite, classement complet)
+// - ni l'un ni l'autre → tableau de zéros
+export function rankRewardsFor(comp, playerCount) {
+  if (Array.isArray(comp?.rewards)) return comp.rewards;
+  if (comp?.rankStep) return reussiteRankRewards(playerCount, comp.rankStep);
+  return Array.from({ length: playerCount }, () => 0);
+}
+
 // Rang « compétition » (1224) : les ex æquo partagent le même rang.
 // Retourne l'index de médaille (0 = 1er) = nombre de joueurs strictement meilleurs.
 export function medalRank(score, totals, winMode) {
