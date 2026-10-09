@@ -9,7 +9,7 @@
 
 PWA mobile-first de comptage de points pour jeux de société. React 19 + Vite 8 + vitest. Déployée sur GitHub Pages (`badindustries/score-keeper`, branche `main`).
 
-**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies · Barbu · Mythologies · Take Time (coop) · Visions · Les Papattes
+**Jeux supportés** : Odin · Flip 7 · Skyjo · Roi des Nains · Qwirkle · Terraforming Mars · Harmonies · Barbu · Mythologies · Take Time (coop) · Visions · Les Papattes · Skull King
 
 ---
 
@@ -29,6 +29,7 @@ src/
       SheetBoard.jsx     — moteur « feuille de score » wizard (TM, Harmonies) — tmStep local
       ContractsBoard.jsx — moteur « contrats » (Barbu) — contractDraft local
       ProgressBoard.jsx  — moteur « progression » coop (Take Time) — sans score
+      BiddingBoard.jsx   — moteur « enchères » (Skull King) — roundDraft local, score non linéaire
     GameSelector.jsx   — sélecteur de jeu
     HistoryApp.jsx     — écran plein Historique & stats (onglets Parties/Stats, filtres période+jeu+groupe)
     WhoStartsApp.jsx   — mini-app "doigts sur l'écran" pour désigner qui commence
@@ -89,6 +90,14 @@ calculer sa valeur **avant** l'appel à `update()`, depuis `data` (état courant
 - Boutons « Raté » (+1 tries) / « Réussie » (+1 tries, done=true) sur l'horloge courante ; tap sur une horloge réussie = la remettre en jeu
 - `recordCampaign(grp, gameId, ag)` : archive coop — `winners` = toute l'équipe, `rounds` = total tentatives, `roundsLabel: "tentative"` (les historiques affichent `pg.roundsLabel||"tour"`)
 - Pas de win screen classique : le board affiche son panneau 🎉 + bouton « Archiver la campagne »
+
+### Jeu à enchères (Skull King)
+- `G.scoreType === "bidding"` + `G.maxRounds` (10) + `G.endOnDemand: true` (cache la limite de score en configuration — la fin est automatique par nombre de manches, pas par seuil de score)
+- Scoring non linéaire, donc PAS `computeContractScores` : `computeSkullKingRoundScore(bid, actual, bonus, roundNum)`
+  - annonce 0 : ±10×manche selon succès ; annonce >0 atteinte : +20×annonce + bonus ; annonce manquée : −10×écart, bonus perdu
+- `BiddingBoard` gère son propre `roundDraft` local `{ step, bid[], actual[], bonus[] }`, wizard à 3 étapes communes à tous les jeux (pas de sélection de contrat, une seule manche possible à la fois)
+- Fin automatique : `validerRound` vérifie `(g.history.length+1) >= G.maxRounds` (indépendant de `isGameOver`/`G.limit`, qui sont basés sur un score, pas un nombre de manches)
+- `history` stocke `{bid, actual, bonus, scores}` par manche (compatible avec la sheet Historique générique via `h.scores`)
 
 ### Gestion de victoire
 - `isGameOver(totals, limit)` : `Math.max(...totals) >= limit` — déclenche quand

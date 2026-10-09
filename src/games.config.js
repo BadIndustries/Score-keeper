@@ -10,6 +10,7 @@ export const KEY_MYTHOLOGIES = "mythologies-v1";
 export const KEY_TAKETIME = "taketime-v1";
 export const KEY_VISIONS = "visions-v1";
 export const KEY_PAPATTES = "papattes-v1";
+export const KEY_SKULLKING = "skullking-v1";
 export const KEY_GROUPS = "scorekeeper-groups-v1";
 export const COLORS  = ["#ff6e6c","#67d5b5","#f7c59f","#c3aed6","#5eb8ff","#ffd166"];
 export const MEDALS  = ["\u{1F947}","\u{1F948}","\u{1F949}","4e","5e","6e"];
@@ -394,6 +395,32 @@ export const GAMES = {
         ] },
     ],
   },
+  skullking: {
+    key: KEY_SKULLKING,
+    label: "Skull King",
+    emoji: "🏴‍☠️",
+    color: "#ca8a04",
+    colorDim: "rgba(202,138,4,.14)",
+    border: "#2b2008",
+    surface: "#1a1404",
+    surface2: "#231b06",
+    bg: "#0d0a02",
+    text: "#f5ecd8",
+    sub: "#8a7a4a",
+    accent: "#facc15",
+    btnBg: "#ca8a04",
+    btnColor: "#0d0a02",
+    desc: "Le plus de points gagne\n10 manches — annonce tes plis",
+    defaultLimit: 999,
+    limitLabel: "Limite",
+    limitMin: 100, limitMax: 999, limitStep: 1,
+    goalKey: "limit",
+    winMode: "highest",
+    endOnDemand: true,
+    scoreType: "bidding",
+    maxRounds: 10,
+    rulesIntro: "10 manches : à la manche N, chaque joueur reçoit N cartes et annonce combien de plis il va remporter. Fin automatique après la 10ᵉ manche, le plus de points gagne.",
+  },
 };
 
-export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999, taketime: 999, visions: 999, papattes: 25 };
+export const DEFAULT_LIMITS = { odin: 15, flip7: 200, skyjo: 100, rdn: 40, qwirkle: 100, terraforming: 999, harmonies: 999, barbu: 999, mythologies: 999, taketime: 999, visions: 999, papattes: 25, skullking: 999 };

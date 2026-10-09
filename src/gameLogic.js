@@ -119,6 +119,16 @@ export function rankRewardsFor(comp, playerCount) {
   return Array.from({ length: playerCount }, () => 0);
 }
 
+// Skull King — score d'un joueur pour une manche (annonce vs plis remportés) :
+// - annonce 0 : +10×manche si 0 pli remporté, sinon −10×manche
+// - annonce atteinte (plis === annonce, >0) : +20 par pli annoncé + bonus (14/pirates/sirènes/Skull King)
+// - annonce manquée : −10 par pli d'écart, bonus perdu (non compté)
+export function computeSkullKingRoundScore(bid, actual, bonus, roundNum) {
+  if (bid === 0) return actual === 0 ? 10 * roundNum : -10 * roundNum;
+  if (actual === bid) return 20 * bid + (bonus || 0);
+  return -10 * Math.abs(bid - actual);
+}
+
 // Rang « compétition » (1224) : les ex æquo partagent le même rang.
 // Retourne l'index de médaille (0 = 1er) = nombre de joueurs strictement meilleurs.
 export function medalRank(score, totals, winMode) {

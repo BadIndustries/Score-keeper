@@ -176,6 +176,25 @@ describe('GAMES -- Visions', () => {
   })
 })
 
+describe('GAMES -- Skull King', () => {
+  const K = GAMES.skullking
+  it('jeu a encheres, 10 manches fixes, highest', () => {
+    expect(K.scoreType).toBe('bidding')
+    expect(K.maxRounds).toBe(10)
+    expect(K.winMode).toBe('highest')
+  })
+  it('endOnDemand true : pas de limite de score, fin par nombre de manches', () => {
+    expect(K.endOnDemand).toBe(true)
+  })
+  it('a une intro de regles', () => {
+    expect(typeof K.rulesIntro).toBe('string')
+    expect(K.rulesIntro.length).toBeGreaterThan(0)
+  })
+  it('DEFAULT_LIMITS contient skullking', () => {
+    expect(DEFAULT_LIMITS.skullking).toBe(999)
+  })
+})
+
 describe('GAMES -- Les Papattes', () => {
   const P = GAMES.papattes
   const manche = P.contracts.find(c => c.key === 'manche')

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, rankRewardsFor, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod, campaignStats, recordCampaign, computeHistoryStats } from './gameLogic.js'
+import { computeTourScores, isGameOver, getWinnerIndex, makeActiveGame, recordPastGame, tmGetAllFields, computeTMTotal, computeContractScores, reussiteRankRewards, rankRewardsFor, medalRank, normalizeActiveGame, makeWinSnapshot, collectKnownPlayers, filterByPeriod, campaignStats, recordCampaign, computeHistoryStats, computeSkullKingRoundScore } from './gameLogic.js'
 import { GAMES } from './games.config.js'
 
 describe('computeTourScores', () => {
@@ -450,6 +450,31 @@ describe('Les Papattes -- calcul d une manche via computeContractScores', () => 
   it('valeurs null (non classe) traitees comme 0', () => {
     const counts = { restantes: [5], proximite: [null], ecart: [null] }
     expect(computeContractScores(contract, counts, 1)).toEqual([5])
+  })
+})
+
+describe('computeSkullKingRoundScore', () => {
+  it('annonce 0 reussie (0 pli remporte) : +10 x numero de manche', () => {
+    expect(computeSkullKingRoundScore(0, 0, 0, 3)).toBe(30)
+    expect(computeSkullKingRoundScore(0, 0, 0, 7)).toBe(70)
+  })
+  it('annonce 0 ratee (au moins 1 pli remporte) : -10 x numero de manche', () => {
+    expect(computeSkullKingRoundScore(0, 1, 0, 3)).toBe(-30)
+    expect(computeSkullKingRoundScore(0, 4, 0, 5)).toBe(-50)
+  })
+  it('annonce positive atteinte : +20 par pli annonce + bonus', () => {
+    expect(computeSkullKingRoundScore(3, 3, 0, 8)).toBe(60)
+    expect(computeSkullKingRoundScore(3, 3, 50, 8)).toBe(110)
+  })
+  it('annonce positive manquee : -10 par pli d ecart, bonus perdu', () => {
+    expect(computeSkullKingRoundScore(3, 1, 50, 8)).toBe(-20)
+    expect(computeSkullKingRoundScore(3, 5, 50, 8)).toBe(-20)
+  })
+  it('bonus absent ou undefined traite comme 0', () => {
+    expect(computeSkullKingRoundScore(2, 2, undefined, 4)).toBe(40)
+  })
+  it('annonce egale au numero de la manche (tout pris)', () => {
+    expect(computeSkullKingRoundScore(10, 10, 0, 10)).toBe(200)
   })
 })
 

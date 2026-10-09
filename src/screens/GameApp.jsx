@@ -7,6 +7,7 @@ import { ClassicBoard } from './boards/ClassicBoard.jsx';
 import { SheetBoard } from './boards/SheetBoard.jsx';
 import { ContractsBoard } from './boards/ContractsBoard.jsx';
 import { ProgressBoard } from './boards/ProgressBoard.jsx';
+import { BiddingBoard } from './boards/BiddingBoard.jsx';
 
 export function GameApp({ gameId, onBack }) {
   const G = GAMES[gameId];
@@ -457,6 +458,12 @@ export function GameApp({ gameId, onBack }) {
         <ProgressBoard g={g} G={G} S={S} gameGroupName={gameGroupName}
           update={update} goHome={goHome} archiveCampaign={archiveCampaign}/>}
 
+      {screen==="game" && g && G.scoreType==="bidding" &&
+        <BiddingBoard g={g} G={G} gameId={gameId} S={S} gameGroupName={gameGroupName}
+          roundNum={roundNum} roundLabel={roundLabel} update={update}
+          setSheet={setSheet} goHome={goHome} finDePartie={finDePartie}
+          setWinSnapshot={setWinSnapshot} setShowWin={setShowWin}/>}
+
       {/* ── SHEET: HISTORY ── */}
       {sheet==="history" && g && (
         <BottomSheet title="📜 Historique" G={G} maxHeight="78%" onClose={()=>setSheet(null)}>
@@ -494,48 +501,82 @@ export function GameApp({ gameId, onBack }) {
         </BottomSheet>
       )}
 
-      {/* ── SHEET: RULES (jeux à contrats) ── */}
-      {sheet==="rules" && g && G.scoreType==="contracts" && (
+      {/* ── SHEET: RULES (jeux à contrats / enchères) ── */}
+      {sheet==="rules" && g && (G.scoreType==="contracts"||G.scoreType==="bidding") && (
         <BottomSheet title={`📖 Règles — ${G.label}`} G={G} maxHeight="86%" onClose={()=>setSheet(null)}>
             <div style={{overflowY:"auto",flex:1,padding:"12px 16px 24px"}}>
               <div style={{fontSize:".8rem",color:G.text,lineHeight:1.5,marginBottom:14}}>
                 {G.rulesIntro}
               </div>
 
-              <div style={{fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:G.sub,marginBottom:8}}>{roundLabel}s</div>
-              {G.contracts.map(c=>(
-                <div key={c.key} style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:12,
-                  padding:"10px 12px",marginBottom:7}}>
-                  <div style={{display:"flex",alignItems:"center",gap:9}}>
-                    <span style={{fontSize:"1.3rem",flexShrink:0}}>{c.emoji}</span>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontFamily:"'Cinzel',serif",fontSize:".9rem",fontWeight:700,color:c.positive?"#6dcc90":G.text}}>{c.label}</div>
-                      <div style={{fontSize:".68rem",color:G.sub,marginTop:1}}>{c.hint}</div>
+              {G.scoreType==="contracts" && (<>
+                <div style={{fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:G.sub,marginBottom:8}}>{roundLabel}s</div>
+                {G.contracts.map(c=>(
+                  <div key={c.key} style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:12,
+                    padding:"10px 12px",marginBottom:7}}>
+                    <div style={{display:"flex",alignItems:"center",gap:9}}>
+                      <span style={{fontSize:"1.3rem",flexShrink:0}}>{c.emoji}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontFamily:"'Cinzel',serif",fontSize:".9rem",fontWeight:700,color:c.positive?"#6dcc90":G.text}}>{c.label}</div>
+                        <div style={{fontSize:".68rem",color:G.sub,marginTop:1}}>{c.hint}</div>
+                      </div>
+                    </div>
+                    {c.key==="salade" && (
+                      <div style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`,
+                        display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
+                        {c.components.map(comp=>(
+                          <span key={comp.key}>{comp.emoji} {comp.label} <strong style={{color:"#ff8070"}}>{comp.per}</strong></span>
+                        ))}
+                      </div>
+                    )}
+                    {c.components.filter(comp=>comp.mode==="rank").map(comp=>{
+                      const rewards=rankRewardsFor(comp, g.players.length);
+                      return (
+                        <div key={comp.key} style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`}}>
+                          <div style={{marginBottom:4,color:G.text}}>{comp.emoji} {comp.label}</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
+                            {rewards.map((pts,r)=>(
+                              <span key={r}>{rewards.length>1?`${r+1}${r===0?"er":"e"}`:"✓"} <strong style={{color:"#6dcc90"}}>{pts>0?`+${pts}`:"0"}</strong></span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </>)}
+
+              {G.scoreType==="bidding" && (<>
+                <div style={{fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:G.sub,marginBottom:8}}>Score d'une manche</div>
+                {[
+                  { emoji:"0️⃣", label:"Annonce de 0", detail:"Réussie : +10 × n° de manche · Ratée (≥1 pli) : −10 × n° de manche" },
+                  { emoji:"✅", label:"Annonce atteinte", detail:"+20 points par pli annoncé, + les bonus de la manche" },
+                  { emoji:"❌", label:"Annonce manquée", detail:"−10 points par pli d'écart (annonce vs réellement remporté), bonus perdus" },
+                ].map(r=>(
+                  <div key={r.label} style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:12,
+                    padding:"10px 12px",marginBottom:7,display:"flex",gap:9,alignItems:"flex-start"}}>
+                    <span style={{fontSize:"1.2rem",flexShrink:0}}>{r.emoji}</span>
+                    <div>
+                      <div style={{fontFamily:"'Cinzel',serif",fontSize:".88rem",fontWeight:700,color:G.text}}>{r.label}</div>
+                      <div style={{fontSize:".68rem",color:G.sub,marginTop:1}}>{r.detail}</div>
                     </div>
                   </div>
-                  {c.key==="salade" && (
-                    <div style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`,
-                      display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
-                      {c.components.map(comp=>(
-                        <span key={comp.key}>{comp.emoji} {comp.label} <strong style={{color:"#ff8070"}}>{comp.per}</strong></span>
-                      ))}
-                    </div>
-                  )}
-                  {c.components.filter(comp=>comp.mode==="rank").map(comp=>{
-                    const rewards=rankRewardsFor(comp, g.players.length);
-                    return (
-                      <div key={comp.key} style={{fontSize:".66rem",color:G.sub,marginTop:7,paddingTop:7,borderTop:`1px solid ${G.border}`}}>
-                        <div style={{marginBottom:4,color:G.text}}>{comp.emoji} {comp.label}</div>
-                        <div style={{display:"flex",flexWrap:"wrap",gap:"3px 10px"}}>
-                          {rewards.map((pts,r)=>(
-                            <span key={r}>{rewards.length>1?`${r+1}${r===0?"er":"e"}`:"✓"} <strong style={{color:"#6dcc90"}}>{pts>0?`+${pts}`:"0"}</strong></span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                ))}
+                <div style={{fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:G.sub,margin:"12px 0 8px"}}>
+                  Bonus (uniquement si l'annonce est juste)
                 </div>
-              ))}
+                <div style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:12,padding:"10px 12px",
+                  fontSize:".72rem",color:G.sub,lineHeight:1.7}}>
+                  <div>🔢 14 de couleur capturé : <strong style={{color:"#6dcc90"}}>+10</strong></div>
+                  <div>⚫ 14 noir (l'atout) capturé : <strong style={{color:"#6dcc90"}}>+20</strong></div>
+                  <div>🏴‍☠️ Pirate capturé par le Skull King : <strong style={{color:"#6dcc90"}}>+30</strong></div>
+                  <div>🧜‍♀️ Sirène capturée par un pirate : <strong style={{color:"#6dcc90"}}>+20</strong></div>
+                  <div>🧜‍♀️ Skull King capturé par une sirène : <strong style={{color:"#6dcc90"}}>+40</strong></div>
+                </div>
+                <div style={{fontSize:".66rem",color:G.sub,lineHeight:1.5,marginTop:12,fontStyle:"italic"}}>
+                  L'app te laisse saisir le total des bonus de la manche en une fois — additionne-les avant de valider.
+                </div>
+              </>)}
             </div>
         </BottomSheet>
       )}
